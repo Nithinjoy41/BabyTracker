@@ -26,7 +26,7 @@ public class JoinFamilyDtoValidator : AbstractValidator<JoinFamilyDto>
 {
     public JoinFamilyDtoValidator()
     {
-        RuleFor(x => x.InviteCode).NotEmpty().Length(8);
+        RuleFor(x => x.InviteCode).NotEmpty().Length(6, 8);
     }
 }
 

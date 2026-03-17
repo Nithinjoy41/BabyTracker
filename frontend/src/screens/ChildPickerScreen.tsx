@@ -61,9 +61,15 @@ export default function ChildPickerScreen({ navigation }: any) {
       setInviteCode('');
     } catch (e: any) {
       console.error('[JOIN] Failed:', e);
-      const msg = e.response?.data?.error || e.message || 'Check connection';
+      let msg = e.response?.data?.error || e.message || 'Check connection';
+      
+      // Handle FluentValidation structure
+      if (e.response?.data?.errors) {
+        const firstErr = Object.values(e.response.data.errors)[0];
+        if (Array.isArray(firstErr)) msg = firstErr[0];
+      }
+      
       setErrorMsg(msg);
-      // Fallback alert for environments that support it
       if (Platform.OS !== 'web') {
         Alert.alert('Error', `Could not join: ${msg}`);
       }
