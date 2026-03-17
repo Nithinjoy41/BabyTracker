@@ -1,0 +1,136 @@
+using System.Text;
+using BabyTracker.Api.Middleware;
+using BabyTracker.Application.Interfaces;
+using BabyTracker.Application.Services;
+using BabyTracker.Infrastructure.Data;
+using BabyTracker.Infrastructure.Repositories;
+using BabyTracker.Infrastructure.Storage;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Sqlite;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ── Database ──────────────────────────────────────────
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var useSqlite = string.IsNullOrEmpty(connectionString) ||
+                builder.Configuration.GetValue<bool>("UseSqlite");
+
+builder.Services.AddDbContext<BabyTrackerDbContext>(opt =>
+{
+    if (useSqlite)
+        opt.UseSqlite($"Data Source={Path.Combine(builder.Environment.ContentRootPath, "babytracker.db")}");
+    else
+        opt.UseNpgsql(connectionString);
+});
+
+// ── Repositories ──────────────────────────────────────
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IFamilyRepository, FamilyRepository>();
+builder.Services.AddScoped<ILogRepository, LogRepository>();
+builder.Services.AddScoped<IVaccineRepository, VaccineRepository>();
+builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
+
+// ── Services ──────────────────────────────────────────
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<LogService>();
+builder.Services.AddScoped<VaccineService>();
+builder.Services.AddScoped<PhotoService>();
+
+// ── File Storage ──────────────────────────────────────
+builder.Services.AddSingleton<IFileStorageService>(
+    new LocalFileStorageService(Path.Combine(builder.Environment.ContentRootPath, "uploads")));
+
+// ── FluentValidation ──────────────────────────────────
+builder.Services.AddValidatorsFromAssemblyContaining<BabyTracker.Application.Validators.RegisterDtoValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+
+// ── JWT Authentication ────────────────────────────────
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "BabyTrackerSuperSecretKey12345678!";
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opt =>
+    {
+        opt.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "BabyTracker",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "BabyTrackerApp",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// ── Controllers + Swagger ─────────────────────────────
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "BabyTracker API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Enter 'Bearer {token}'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// ── CORS (allow Expo dev) ─────────────────────────────
+builder.Services.AddCors(opt =>
+    opt.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+
+var app = builder.Build();
+
+// ── Middleware pipeline ───────────────────────────────
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors();
+
+// Serve uploaded files
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+// Auto-create database in dev (supports both SQLite and PostgreSQL)
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<BabyTrackerDbContext>();
+    db.Database.EnsureCreated();
+}
+
+app.Run();

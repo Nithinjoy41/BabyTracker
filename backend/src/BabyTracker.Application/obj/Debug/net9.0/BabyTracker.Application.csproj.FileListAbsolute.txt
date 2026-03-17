@@ -1,0 +1,15 @@
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\bin\Debug\net9.0\BabyTracker.Application.deps.json
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\bin\Debug\net9.0\BabyTracker.Application.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\bin\Debug\net9.0\BabyTracker.Application.pdb
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\bin\Debug\net9.0\BabyTracker.Domain.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\bin\Debug\net9.0\BabyTracker.Domain.pdb
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTracker.Application.csproj.AssemblyReference.cache
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTracker.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTracker.Application.AssemblyInfoInputs.cache
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTracker.Application.AssemblyInfo.cs
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTracker.Application.csproj.CoreCompileInputs.cache
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTrac.11D6784B.Up2Date
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTracker.Application.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\refint\BabyTracker.Application.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\BabyTracker.Application.pdb
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Application\obj\Debug\net9.0\ref\BabyTracker.Application.dll

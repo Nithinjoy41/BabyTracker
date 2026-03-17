@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: babytracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=babytracker;Username=postgres;Password=postgres
+      - Jwt__Key=BabyTrackerSuperSecretKey12345678!
+      - Jwt__Issuer=BabyTracker
+      - Jwt__Audience=BabyTrackerApp
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

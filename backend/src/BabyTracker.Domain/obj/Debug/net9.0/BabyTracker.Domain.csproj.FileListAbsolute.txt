@@ -1,0 +1,11 @@
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\bin\Debug\net9.0\BabyTracker.Domain.deps.json
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\bin\Debug\net9.0\BabyTracker.Domain.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\bin\Debug\net9.0\BabyTracker.Domain.pdb
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.AssemblyInfoInputs.cache
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.AssemblyInfo.cs
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.csproj.CoreCompileInputs.cache
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\refint\BabyTracker.Domain.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.pdb
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\ref\BabyTracker.Domain.dll

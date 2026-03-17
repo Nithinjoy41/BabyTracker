@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BabyTracker.Api/BabyTracker.Api.csproj" />
+    <Project Path="src/BabyTracker.Application/BabyTracker.Application.csproj" />
+    <Project Path="src/BabyTracker.Domain/BabyTracker.Domain.csproj" />
+    <Project Path="src/BabyTracker.Infrastructure/BabyTracker.Infrastructure.csproj" />
+  </Folder>
+</Solution>
