@@ -17,3 +17,4 @@ C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTrack
 C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Infrastructure\obj\Debug\net9.0\BabyTracker.Infrastructure.pdb
 C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Infrastructure\obj\Debug\net9.0\BabyTracker.Infrastructure.genruntimeconfig.cache
 C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Infrastructure\obj\Debug\net9.0\ref\BabyTracker.Infrastructure.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Infrastructure\obj\Debug\net9.0\BabyTracker.Infrastructure.sourcelink.json

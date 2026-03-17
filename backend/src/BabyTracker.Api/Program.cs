@@ -43,8 +43,16 @@ builder.Services.AddScoped<VaccineService>();
 builder.Services.AddScoped<PhotoService>();
 
 // ── File Storage ──────────────────────────────────────
-builder.Services.AddSingleton<IFileStorageService>(
-    new LocalFileStorageService(Path.Combine(builder.Environment.ContentRootPath, "uploads")));
+var cloudinaryName = builder.Configuration["Cloudinary:CloudName"];
+if (!string.IsNullOrEmpty(cloudinaryName))
+{
+    builder.Services.AddSingleton<IFileStorageService, CloudinaryStorageService>();
+}
+else
+{
+    builder.Services.AddSingleton<IFileStorageService>(
+        new LocalFileStorageService(Path.Combine(builder.Environment.ContentRootPath, "uploads")));
+}
 
 // ── FluentValidation ──────────────────────────────────
 builder.Services.AddValidatorsFromAssemblyContaining<BabyTracker.Application.Validators.RegisterDtoValidator>();

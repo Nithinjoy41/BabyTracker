@@ -9,3 +9,4 @@ C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTrack
 C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\refint\BabyTracker.Domain.dll
 C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.pdb
 C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\ref\BabyTracker.Domain.dll
+C:\Users\nithin.joy\OneDrive - Datacom\Desktop\BabyTracker\backend\src\BabyTracker.Domain\obj\Debug\net9.0\BabyTracker.Domain.sourcelink.json
