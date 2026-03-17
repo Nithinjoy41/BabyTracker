@@ -8,7 +8,7 @@ import { addChild } from '../api/children';
 import { joinFamily } from '../api/auth';
 import { Child } from '../types';
 
-export default function ChildPickerScreen() {
+export default function ChildPickerScreen({ navigation }: any) {
   const { children, selectChild, setChildren, familyId, signOut } = useAuth();
   const [showAddChild, setShowAddChild] = useState(false);
   const [showJoinFamily, setShowJoinFamily] = useState(false);
@@ -71,6 +71,13 @@ export default function ChildPickerScreen() {
     return rem > 0 ? `${years}y ${rem}m old` : `${years} year${years > 1 ? 's' : ''} old`;
   };
 
+  const handleSelectChild = async (id: string) => {
+    await selectChild(id);
+    if (navigation?.canGoBack()) {
+      navigation.goBack();
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -86,7 +93,7 @@ export default function ChildPickerScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.childCard} onPress={() => selectChild(item.id)}>
+            <TouchableOpacity style={styles.childCard} onPress={() => handleSelectChild(item.id)}>
               <Text style={styles.childEmoji}>👶</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.childName}>{item.name}</Text>
