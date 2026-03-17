@@ -8,4 +8,4 @@ export const login = (email: string, password: string) =>
   client.post<AuthResponse>('/auth/login', { email, password });
 
 export const joinFamily = (inviteCode: string) =>
-  client.post<FamilyInfo>('/auth/join-family', { inviteCode });
+  client.post<AuthResponse>('/auth/join-family', { inviteCode });

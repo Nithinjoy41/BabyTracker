@@ -24,14 +24,14 @@ public class PhotosController : BaseApiController
     {
         await using var stream = file.OpenReadStream();
         var result = await _photos.UploadAsync(
-            GetUserId(), GetFamilyId(), childId, stream, file.FileName, file.ContentType, notes);
+            GetUserId(), childId, stream, file.FileName, file.ContentType, notes);
         return CreatedAtAction(nameof(GetAll), null, result);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
-        await _photos.DeleteAsync(id, GetFamilyId());
+        await _photos.DeleteAsync(id, GetUserId());
         return NoContent();
     }
 }

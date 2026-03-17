@@ -22,14 +22,14 @@ public class LogsController : BaseApiController
     [HttpPost]
     public async Task<IActionResult> Create([FromQuery] Guid childId, [FromBody] CreateLogEntryDto dto)
     {
-        var result = await _logs.CreateAsync(GetUserId(), GetFamilyId(), childId, dto);
+        var result = await _logs.CreateAsync(GetUserId(), childId, dto);
         return CreatedAtAction(nameof(GetAll), null, result);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
-        await _logs.DeleteAsync(id, GetFamilyId());
+        await _logs.DeleteAsync(id, GetUserId());
         return NoContent();
     }
 }

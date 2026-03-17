@@ -15,8 +15,7 @@ public class ChildrenController : BaseApiController
     [HttpGet]
     public async Task<IActionResult> GetChildren()
     {
-        var familyId = GetFamilyId();
-        var children = await _children.GetChildrenAsync(familyId);
+        var children = await _children.GetChildrenAsync(GetUserId());
         return Ok(children);
     }
 

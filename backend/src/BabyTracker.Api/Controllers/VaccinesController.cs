@@ -22,14 +22,14 @@ public class VaccinesController : BaseApiController
     [HttpPost]
     public async Task<IActionResult> Create([FromQuery] Guid childId, [FromBody] CreateVaccineDto dto)
     {
-        var result = await _vaccines.CreateAsync(GetUserId(), GetFamilyId(), childId, dto);
+        var result = await _vaccines.CreateAsync(GetUserId(), childId, dto);
         return CreatedAtAction(nameof(GetAll), null, result);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
-        await _vaccines.DeleteAsync(id, GetFamilyId());
+        await _vaccines.DeleteAsync(id, GetUserId());
         return NoContent();
     }
 }

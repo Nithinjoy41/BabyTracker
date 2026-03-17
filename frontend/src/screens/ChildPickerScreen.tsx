@@ -48,10 +48,10 @@ export default function ChildPickerScreen({ navigation }: any) {
     setLoading(true);
     try {
       const { data } = await joinFamily(inviteCode.trim());
-      joinFamilySuccess(data.id, data.children || []);
+      joinFamilySuccess(data);
       setShowJoinFamily(false);
       setInviteCode('');
-      Alert.alert('Success', `Joined ${data.name}! You can now see their children.`);
+      Alert.alert('Success', 'Joined family! You can now see their children.');
     } catch (e: any) {
       Alert.alert('Error', e.response?.data?.error || 'Invalid invite code.');
     }

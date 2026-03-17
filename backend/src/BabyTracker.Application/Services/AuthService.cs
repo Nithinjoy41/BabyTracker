@@ -70,52 +70,62 @@ public class AuthService
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var familyId = await _families.GetFamilyIdForUserAsync(user.Id);
-        var token = GenerateJwt(user, familyId);
+        var families = await _families.GetFamiliesForUserAsync(user.Id);
+        var primaryFamilyId = families.FirstOrDefault()?.Id;
+        var token = GenerateJwt(user, primaryFamilyId);
 
-        IEnumerable<ChildDto> childDtos = Enumerable.Empty<ChildDto>();
-        if (familyId.HasValue)
-        {
-            var kids = await _children.GetByFamilyAsync(familyId.Value);
-            childDtos = kids.Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth));
-        }
+        var childDtos = families
+            .SelectMany(f => f.Children ?? Enumerable.Empty<Child>())
+            .Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth))
+            .DistinctBy(c => c.Id)
+            .ToList();
 
-        return new AuthResponseDto(token, user.Email, user.FullName, familyId, childDtos);
+        return new AuthResponseDto(token, user.Email, user.FullName, primaryFamilyId, childDtos);
     }
 
-    public async Task<FamilyResponseDto> JoinFamilyAsync(Guid userId, string inviteCode)
+    public async Task<AuthResponseDto> JoinFamilyAsync(Guid userId, string inviteCode)
     {
         inviteCode = inviteCode.Trim().ToUpperInvariant();
         var invite = await _invites.GetByCodeAsync(inviteCode);
+        Family? family = null;
         
         if (invite is null)
         {
             // Backwards compatibility for old static family invite codes temporarily
-            var oldFamily = await _families.GetByInviteCodeAsync(inviteCode);
-            if (oldFamily is null)
+            family = await _families.GetByInviteCodeAsync(inviteCode);
+            if (family is null)
                 throw new InvalidOperationException("Invalid invite code.");
             
-            await JoinExistingFamily(userId, oldFamily);
-            return MapToDto(oldFamily);
+            await JoinExistingFamily(userId, family);
+        }
+        else
+        {
+            if (invite.IsUsed)
+                throw new InvalidOperationException("This invite code has already been used.");
+                
+            if (invite.ExpiresAt < DateTime.UtcNow)
+                throw new InvalidOperationException("This invite code has expired.");
+
+            // Valid invite
+            invite.IsUsed = true;
+            await _invites.UpdateAsync(invite);
+            
+            family = await _families.GetByIdAsync(invite.FamilyId) ?? throw new InvalidOperationException("Family not found");
+            await JoinExistingFamily(userId, family);
         }
 
-        if (invite.IsUsed)
-            throw new InvalidOperationException("This invite code has already been used.");
-            
-        if (invite.ExpiresAt < DateTime.UtcNow)
-            throw new InvalidOperationException("This invite code has expired.");
-
-        // Valid invite
-        invite.IsUsed = true;
-        await _invites.UpdateAsync(invite);
+        // Return a fresh token and ALL children the user now has access to
+        var user = await _users.GetByIdAsync(userId) ?? throw new InvalidOperationException("User not found");
+        var families = await _families.GetFamiliesForUserAsync(userId);
         
-        var family = await _families.GetByIdAsync(invite.FamilyId) ?? throw new InvalidOperationException("Family not found");
-        
-        await JoinExistingFamily(userId, family);
+        var token = GenerateJwt(user, family.Id);
+        var childDtos = families
+            .SelectMany(f => f.Children ?? Enumerable.Empty<Child>())
+            .Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth))
+            .DistinctBy(c => c.Id)
+            .ToList();
 
-        // Fetch again to get updated members
-        var updatedFamily = await _families.GetByIdAsync(family.Id);
-        return MapToDto(updatedFamily ?? family);
+        return new AuthResponseDto(token, user.Email, user.FullName, family.Id, childDtos);
     }
 
     private async Task JoinExistingFamily(Guid userId, Family family)

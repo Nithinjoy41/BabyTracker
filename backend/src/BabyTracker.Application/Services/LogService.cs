@@ -8,19 +8,30 @@ public class LogService
 {
     private readonly ILogRepository _logs;
     private readonly IUserRepository _users;
+    private readonly IChildRepository _children;
+    private readonly IFamilyRepository _families;
 
-    public LogService(ILogRepository logs, IUserRepository users)
+    public LogService(ILogRepository logs, IUserRepository users, IChildRepository children, IFamilyRepository families)
     {
         _logs = logs;
         _users = users;
+        _children = children;
+        _families = families;
     }
 
-    public async Task<LogEntryResponseDto> CreateAsync(Guid userId, Guid familyId, Guid childId, CreateLogEntryDto dto)
+    public async Task<LogEntryResponseDto> CreateAsync(Guid userId, Guid childId, CreateLogEntryDto dto)
     {
+        var child = await _children.GetByIdAsync(childId) 
+            ?? throw new KeyNotFoundException("Child not found.");
+            
+        // Security check: Is user in this child's family?
+        var membership = await _families.GetMemberAsync(userId, child.FamilyId);
+        if (membership == null) throw new UnauthorizedAccessException();
+
         var entry = new LogEntry
         {
             Id = Guid.NewGuid(),
-            FamilyId = familyId,
+            FamilyId = child.FamilyId,
             ChildId = childId,
             UserId = userId,
             Type = Enum.Parse<LogType>(dto.Type),
@@ -40,12 +51,15 @@ public class LogService
         return new PagedResult<LogEntryResponseDto>(dtos, total, page, pageSize);
     }
 
-    public async Task DeleteAsync(Guid id, Guid familyId)
+    public async Task DeleteAsync(Guid id, Guid userId)
     {
         var entry = await _logs.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Log entry not found.");
-        if (entry.FamilyId != familyId)
-            throw new UnauthorizedAccessException();
+            
+        // Security check: Is user in this family?
+        var membership = await _families.GetMemberAsync(userId, entry.FamilyId);
+        if (membership == null) throw new UnauthorizedAccessException();
+
         await _logs.DeleteAsync(id);
     }
 

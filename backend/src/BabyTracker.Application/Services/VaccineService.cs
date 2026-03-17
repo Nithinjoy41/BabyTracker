@@ -8,19 +8,30 @@ public class VaccineService
 {
     private readonly IVaccineRepository _vaccines;
     private readonly IUserRepository _users;
+    private readonly IChildRepository _children;
+    private readonly IFamilyRepository _families;
 
-    public VaccineService(IVaccineRepository vaccines, IUserRepository users)
+    public VaccineService(IVaccineRepository vaccines, IUserRepository users, IChildRepository children, IFamilyRepository families)
     {
         _vaccines = vaccines;
         _users = users;
+        _children = children;
+        _families = families;
     }
 
-    public async Task<VaccineResponseDto> CreateAsync(Guid userId, Guid familyId, Guid childId, CreateVaccineDto dto)
+    public async Task<VaccineResponseDto> CreateAsync(Guid userId, Guid childId, CreateVaccineDto dto)
     {
+        var child = await _children.GetByIdAsync(childId) 
+            ?? throw new KeyNotFoundException("Child not found.");
+            
+        // Security check: Is user in this child's family?
+        var membership = await _families.GetMemberAsync(userId, child.FamilyId);
+        if (membership == null) throw new UnauthorizedAccessException();
+
         var vaccine = new Vaccine
         {
             Id = Guid.NewGuid(),
-            FamilyId = familyId,
+            FamilyId = child.FamilyId,
             ChildId = childId,
             UserId = userId,
             Name = dto.Name,
@@ -39,12 +50,15 @@ public class VaccineService
         return new PagedResult<VaccineResponseDto>(dtos, total, page, pageSize);
     }
 
-    public async Task DeleteAsync(Guid id, Guid familyId)
+    public async Task DeleteAsync(Guid id, Guid userId)
     {
         var vaccine = await _vaccines.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Vaccine not found.");
-        if (vaccine.FamilyId != familyId)
-            throw new UnauthorizedAccessException();
+            
+        // Security check: Is user in this family?
+        var membership = await _families.GetMemberAsync(userId, vaccine.FamilyId);
+        if (membership == null) throw new UnauthorizedAccessException();
+
         await _vaccines.DeleteAsync(id);
     }
 }

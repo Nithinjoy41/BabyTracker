@@ -66,6 +66,16 @@ public class FamilyRepository : IFamilyRepository
 
     public async Task<FamilyMember?> GetMemberAsync(Guid userId, Guid familyId) =>
         await _db.FamilyMembers.FirstOrDefaultAsync(fm => fm.UserId == userId && fm.FamilyId == familyId);
+
+    public async Task<IEnumerable<Family>> GetFamiliesForUserAsync(Guid userId)
+    {
+        return await _db.FamilyMembers
+            .Where(m => m.UserId == userId)
+            .Include(m => m.Family)
+            .ThenInclude(f => f.Children)
+            .Select(m => m.Family)
+            .ToListAsync();
+    }
 }
 
 public class ChildRepository : IChildRepository

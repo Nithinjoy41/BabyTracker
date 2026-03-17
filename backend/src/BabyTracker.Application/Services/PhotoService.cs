@@ -9,21 +9,32 @@ public class PhotoService
     private readonly IPhotoRepository _photos;
     private readonly IFileStorageService _storage;
     private readonly IUserRepository _users;
+    private readonly IChildRepository _children;
+    private readonly IFamilyRepository _families;
 
-    public PhotoService(IPhotoRepository photos, IFileStorageService storage, IUserRepository users)
+    public PhotoService(IPhotoRepository photos, IFileStorageService storage, IUserRepository users, IChildRepository children, IFamilyRepository families)
     {
         _photos = photos;
         _storage = storage;
         _users = users;
+        _children = children;
+        _families = families;
     }
 
-    public async Task<PhotoResponseDto> UploadAsync(Guid userId, Guid familyId, Guid childId, Stream fileStream, string fileName, string contentType, string? notes)
+    public async Task<PhotoResponseDto> UploadAsync(Guid userId, Guid childId, Stream fileStream, string fileName, string contentType, string? notes)
     {
+        var child = await _children.GetByIdAsync(childId) 
+            ?? throw new KeyNotFoundException("Child not found.");
+            
+        // Security check: Is user in this child's family?
+        var membership = await _families.GetMemberAsync(userId, child.FamilyId);
+        if (membership == null) throw new UnauthorizedAccessException();
+
         var url = await _storage.SaveFileAsync(fileStream, fileName, contentType);
         var photo = new Photo
         {
             Id = Guid.NewGuid(),
-            FamilyId = familyId,
+            FamilyId = child.FamilyId,
             ChildId = childId,
             UserId = userId,
             Url = url,
@@ -42,12 +53,15 @@ public class PhotoService
         return new PagedResult<PhotoResponseDto>(dtos, total, page, pageSize);
     }
 
-    public async Task DeleteAsync(Guid id, Guid familyId)
+    public async Task DeleteAsync(Guid id, Guid userId)
     {
         var photo = await _photos.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Photo not found.");
-        if (photo.FamilyId != familyId)
-            throw new UnauthorizedAccessException();
+            
+        // Security check: Is user in this family?
+        var membership = await _families.GetMemberAsync(userId, photo.FamilyId);
+        if (membership == null) throw new UnauthorizedAccessException();
+
         await _storage.DeleteFileAsync(photo.Url);
         await _photos.DeleteAsync(id);
     }

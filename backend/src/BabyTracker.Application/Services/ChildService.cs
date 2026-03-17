@@ -29,10 +29,13 @@ public class ChildService
         return new ChildDto(child.Id, child.Name, child.DateOfBirth);
     }
 
-    public async Task<IEnumerable<ChildDto>> GetChildrenAsync(Guid familyId)
+    public async Task<IEnumerable<ChildDto>> GetChildrenAsync(Guid userId)
     {
-        var children = await _children.GetByFamilyAsync(familyId);
-        return children.Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth));
+        var families = await _families.GetFamiliesForUserAsync(userId);
+        return families
+            .SelectMany(f => f.Children ?? Enumerable.Empty<Child>())
+            .Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth))
+            .DistinctBy(c => c.Id);
     }
 
     public async Task DeleteChildAsync(Guid childId) => await _children.DeleteAsync(childId);
