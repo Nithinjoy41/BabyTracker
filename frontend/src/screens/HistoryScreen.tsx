@@ -2,26 +2,29 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getLogs, deleteLog } from '../api/logs';
+import { useAuth } from '../contexts/AuthContext';
 import { LogEntry } from '../types';
 
 const typeEmoji: Record<string, string> = { Food: '🍼', Nappy: '🧷', Sleep: '😴' };
 
 export default function HistoryScreen() {
+  const { selectedChildId } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchLogs = async (p = 1) => {
+    if (!selectedChildId) return;
     try {
-      const { data } = await getLogs(p, 20);
+      const { data } = await getLogs(selectedChildId, p, 20);
       setLogs(p === 1 ? data.items : [...logs, ...data.items]);
       setTotal(data.totalCount);
       setPage(p);
     } catch {}
   };
 
-  useFocusEffect(useCallback(() => { fetchLogs(1); }, []));
+  useFocusEffect(useCallback(() => { fetchLogs(1); }, [selectedChildId]));
 
   const onRefresh = async () => { setRefreshing(true); await fetchLogs(1); setRefreshing(false); };
   const loadMore = () => { if (logs.length < total) fetchLogs(page + 1); };

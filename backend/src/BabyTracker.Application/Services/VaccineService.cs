@@ -15,12 +15,13 @@ public class VaccineService
         _users = users;
     }
 
-    public async Task<VaccineResponseDto> CreateAsync(Guid userId, Guid familyId, CreateVaccineDto dto)
+    public async Task<VaccineResponseDto> CreateAsync(Guid userId, Guid familyId, Guid childId, CreateVaccineDto dto)
     {
         var vaccine = new Vaccine
         {
             Id = Guid.NewGuid(),
             FamilyId = familyId,
+            ChildId = childId,
             UserId = userId,
             Name = dto.Name,
             Date = dto.Date,
@@ -31,9 +32,9 @@ public class VaccineService
         return new VaccineResponseDto(vaccine.Id, vaccine.Name, vaccine.Date, vaccine.Notes, user!.FullName);
     }
 
-    public async Task<PagedResult<VaccineResponseDto>> GetByFamilyAsync(Guid familyId, int page, int pageSize)
+    public async Task<PagedResult<VaccineResponseDto>> GetByChildAsync(Guid childId, int page, int pageSize)
     {
-        var (items, total) = await _vaccines.GetByFamilyAsync(familyId, page, pageSize);
+        var (items, total) = await _vaccines.GetByChildAsync(childId, page, pageSize);
         var dtos = items.Select(v => new VaccineResponseDto(v.Id, v.Name, v.Date, v.Notes, v.User.FullName));
         return new PagedResult<VaccineResponseDto>(dtos, total, page, pageSize);
     }

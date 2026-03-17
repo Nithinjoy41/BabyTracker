@@ -2,10 +2,10 @@ import { Platform } from 'react-native';
 import client from './client';
 import { Photo, PagedResult } from '../types';
 
-export const getPhotos = (page = 1, pageSize = 20) =>
-  client.get<PagedResult<Photo>>('/photos', { params: { page, pageSize } });
+export const getPhotos = (childId: string, page = 1, pageSize = 20) =>
+  client.get<PagedResult<Photo>>('/photos', { params: { childId, page, pageSize } });
 
-export const uploadPhoto = async (uri: string, notes?: string) => {
+export const uploadPhoto = async (childId: string, uri: string, notes?: string) => {
   const formData = new FormData();
   const filename = uri.split('/').pop() || 'photo.jpg';
 
@@ -25,6 +25,7 @@ export const uploadPhoto = async (uri: string, notes?: string) => {
 
   return client.post<Photo>('/photos', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    params: { childId },
   });
 };
 

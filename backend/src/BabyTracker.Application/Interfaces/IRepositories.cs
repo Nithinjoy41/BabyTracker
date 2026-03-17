@@ -18,10 +18,18 @@ public interface IFamilyRepository
     Task<Guid?> GetFamilyIdForUserAsync(Guid userId);
 }
 
+public interface IChildRepository
+{
+    Task<Child?> GetByIdAsync(Guid id);
+    Task<IEnumerable<Child>> GetByFamilyAsync(Guid familyId);
+    Task<Child> CreateAsync(Child child);
+    Task DeleteAsync(Guid id);
+}
+
 public interface ILogRepository
 {
     Task<LogEntry?> GetByIdAsync(Guid id);
-    Task<(IEnumerable<LogEntry> Items, int TotalCount)> GetByFamilyAsync(Guid familyId, int page, int pageSize);
+    Task<(IEnumerable<LogEntry> Items, int TotalCount)> GetByChildAsync(Guid childId, int page, int pageSize);
     Task<LogEntry> CreateAsync(LogEntry entry);
     Task DeleteAsync(Guid id);
 }
@@ -29,7 +37,7 @@ public interface ILogRepository
 public interface IVaccineRepository
 {
     Task<Vaccine?> GetByIdAsync(Guid id);
-    Task<(IEnumerable<Vaccine> Items, int TotalCount)> GetByFamilyAsync(Guid familyId, int page, int pageSize);
+    Task<(IEnumerable<Vaccine> Items, int TotalCount)> GetByChildAsync(Guid childId, int page, int pageSize);
     Task<Vaccine> CreateAsync(Vaccine vaccine);
     Task DeleteAsync(Guid id);
 }
@@ -37,7 +45,7 @@ public interface IVaccineRepository
 public interface IPhotoRepository
 {
     Task<Photo?> GetByIdAsync(Guid id);
-    Task<(IEnumerable<Photo> Items, int TotalCount)> GetByFamilyAsync(Guid familyId, int page, int pageSize);
+    Task<(IEnumerable<Photo> Items, int TotalCount)> GetByChildAsync(Guid childId, int page, int pageSize);
     Task<Photo> CreateAsync(Photo photo);
     Task DeleteAsync(Guid id);
 }

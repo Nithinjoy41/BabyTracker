@@ -41,12 +41,14 @@ builder.Services.AddDbContext<BabyTrackerDbContext>(opt =>
 // ── Repositories ──────────────────────────────────────
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IFamilyRepository, FamilyRepository>();
+builder.Services.AddScoped<IChildRepository, ChildRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IVaccineRepository, VaccineRepository>();
 builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
 
 // ── Services ──────────────────────────────────────────
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ChildService>();
 builder.Services.AddScoped<LogService>();
 builder.Services.AddScoped<VaccineService>();
 builder.Services.AddScoped<PhotoService>();

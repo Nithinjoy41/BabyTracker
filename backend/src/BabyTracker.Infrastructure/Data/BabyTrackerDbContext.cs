@@ -11,6 +11,7 @@ public class BabyTrackerDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Family> Families => Set<Family>();
     public DbSet<FamilyMember> FamilyMembers => Set<FamilyMember>();
+    public DbSet<Child> Children => Set<Child>();
     public DbSet<LogEntry> LogEntries => Set<LogEntry>();
     public DbSet<Vaccine> Vaccines => Set<Vaccine>();
     public DbSet<Photo> Photos => Set<Photo>();
@@ -56,6 +57,19 @@ public class BabyTrackerDbContext : DbContext
              .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // ── Child ─────────────────────────────────────────────
+        modelBuilder.Entity<Child>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Name).HasMaxLength(200).IsRequired();
+            e.HasIndex(c => c.FamilyId);
+
+            e.HasOne(c => c.Family)
+             .WithMany(f => f.Children)
+             .HasForeignKey(c => c.FamilyId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
         // ── LogEntry ──────────────────────────────────────────
         modelBuilder.Entity<LogEntry>(e =>
         {
@@ -63,12 +77,18 @@ public class BabyTrackerDbContext : DbContext
             e.Property(l => l.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
             e.Property(l => l.Notes).HasMaxLength(1000);
             e.HasIndex(l => l.FamilyId);
+            e.HasIndex(l => l.ChildId);
             e.HasIndex(l => l.Timestamp);
 
             e.HasOne(l => l.Family)
              .WithMany(f => f.LogEntries)
              .HasForeignKey(l => l.FamilyId)
              .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(l => l.Child)
+             .WithMany(c => c.LogEntries)
+             .HasForeignKey(l => l.ChildId)
+             .OnDelete(DeleteBehavior.NoAction);
 
             e.HasOne(l => l.User)
              .WithMany(u => u.LogEntries)
@@ -83,11 +103,17 @@ public class BabyTrackerDbContext : DbContext
             e.Property(v => v.Name).HasMaxLength(200).IsRequired();
             e.Property(v => v.Notes).HasMaxLength(1000);
             e.HasIndex(v => v.FamilyId);
+            e.HasIndex(v => v.ChildId);
 
             e.HasOne(v => v.Family)
              .WithMany(f => f.Vaccines)
              .HasForeignKey(v => v.FamilyId)
              .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(v => v.Child)
+             .WithMany(c => c.Vaccines)
+             .HasForeignKey(v => v.ChildId)
+             .OnDelete(DeleteBehavior.NoAction);
 
             e.HasOne(v => v.User)
              .WithMany(u => u.Vaccines)
@@ -102,11 +128,17 @@ public class BabyTrackerDbContext : DbContext
             e.Property(p => p.Url).HasMaxLength(500).IsRequired();
             e.Property(p => p.Notes).HasMaxLength(1000);
             e.HasIndex(p => p.FamilyId);
+            e.HasIndex(p => p.ChildId);
 
             e.HasOne(p => p.Family)
              .WithMany(f => f.Photos)
              .HasForeignKey(p => p.FamilyId)
              .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(p => p.Child)
+             .WithMany(c => c.Photos)
+             .HasForeignKey(p => p.ChildId)
+             .OnDelete(DeleteBehavior.NoAction);
 
             e.HasOne(p => p.User)
              .WithMany(u => u.Photos)

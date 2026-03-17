@@ -3,6 +3,13 @@ export interface AuthResponse {
   email: string;
   fullName: string;
   familyId: string | null;
+  children: Child[];
+}
+
+export interface Child {
+  id: string;
+  name: string;
+  dateOfBirth: string;
 }
 
 export interface LogEntry {
@@ -43,4 +50,5 @@ export interface FamilyInfo {
   name: string;
   inviteCode: string;
   members: { fullName: string; role: string; joinedAt: string }[];
+  children: Child[];
 }

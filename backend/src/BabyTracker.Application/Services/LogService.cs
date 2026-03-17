@@ -15,12 +15,13 @@ public class LogService
         _users = users;
     }
 
-    public async Task<LogEntryResponseDto> CreateAsync(Guid userId, Guid familyId, CreateLogEntryDto dto)
+    public async Task<LogEntryResponseDto> CreateAsync(Guid userId, Guid familyId, Guid childId, CreateLogEntryDto dto)
     {
         var entry = new LogEntry
         {
             Id = Guid.NewGuid(),
             FamilyId = familyId,
+            ChildId = childId,
             UserId = userId,
             Type = Enum.Parse<LogType>(dto.Type),
             Timestamp = dto.Timestamp,
@@ -32,9 +33,9 @@ public class LogService
         return ToDto(entry, user!.FullName);
     }
 
-    public async Task<PagedResult<LogEntryResponseDto>> GetByFamilyAsync(Guid familyId, int page, int pageSize)
+    public async Task<PagedResult<LogEntryResponseDto>> GetByChildAsync(Guid childId, int page, int pageSize)
     {
-        var (items, total) = await _logs.GetByFamilyAsync(familyId, page, pageSize);
+        var (items, total) = await _logs.GetByChildAsync(childId, page, pageSize);
         var dtos = items.Select(e => ToDto(e, e.User.FullName));
         return new PagedResult<LogEntryResponseDto>(dtos, total, page, pageSize);
     }

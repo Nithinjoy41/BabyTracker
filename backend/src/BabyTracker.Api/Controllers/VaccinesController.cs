@@ -13,16 +13,16 @@ public class VaccinesController : BaseApiController
     public VaccinesController(VaccineService vaccines) => _vaccines = vaccines;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAll([FromQuery] Guid childId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _vaccines.GetByFamilyAsync(GetFamilyId(), page, pageSize);
+        var result = await _vaccines.GetByChildAsync(childId, page, pageSize);
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateVaccineDto dto)
+    public async Task<IActionResult> Create([FromQuery] Guid childId, [FromBody] CreateVaccineDto dto)
     {
-        var result = await _vaccines.CreateAsync(GetUserId(), GetFamilyId(), dto);
+        var result = await _vaccines.CreateAsync(GetUserId(), GetFamilyId(), childId, dto);
         return CreatedAtAction(nameof(GetAll), null, result);
     }
 

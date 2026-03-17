@@ -3,8 +3,12 @@ namespace BabyTracker.Application.DTOs;
 // ── Auth ──────────────────────────────────────────────
 public record RegisterDto(string Email, string Password, string FullName);
 public record LoginDto(string Email, string Password);
-public record AuthResponseDto(string Token, string Email, string FullName, Guid? FamilyId);
+public record AuthResponseDto(string Token, string Email, string FullName, Guid? FamilyId, IEnumerable<ChildDto>? Children);
 public record JoinFamilyDto(string InviteCode);
+
+// ── Child ─────────────────────────────────────────────
+public record CreateChildDto(string Name, DateTime DateOfBirth);
+public record ChildDto(Guid Id, string Name, DateTime DateOfBirth);
 
 // ── Log Entry ─────────────────────────────────────────
 public record CreateLogEntryDto(string Type, DateTime Timestamp, int? DurationMinutes, string? Notes);
@@ -20,7 +24,7 @@ public record VaccineResponseDto(Guid Id, string Name, DateTime Date, string? No
 public record PhotoResponseDto(Guid Id, string Url, string? Notes, string UploadedBy, DateTime UploadedAt);
 
 // ── Family ────────────────────────────────────────────
-public record FamilyResponseDto(Guid Id, string Name, string InviteCode, IEnumerable<string> Members);
+public record FamilyResponseDto(Guid Id, string Name, string InviteCode, IEnumerable<string> Members, IEnumerable<ChildDto> Children);
 
 // ── Pagination ────────────────────────────────────────
 public record PagedResult<T>(IEnumerable<T> Items, int TotalCount, int Page, int PageSize);

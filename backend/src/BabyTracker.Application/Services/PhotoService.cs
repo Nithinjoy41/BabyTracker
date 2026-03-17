@@ -17,13 +17,14 @@ public class PhotoService
         _users = users;
     }
 
-    public async Task<PhotoResponseDto> UploadAsync(Guid userId, Guid familyId, Stream fileStream, string fileName, string contentType, string? notes)
+    public async Task<PhotoResponseDto> UploadAsync(Guid userId, Guid familyId, Guid childId, Stream fileStream, string fileName, string contentType, string? notes)
     {
         var url = await _storage.SaveFileAsync(fileStream, fileName, contentType);
         var photo = new Photo
         {
             Id = Guid.NewGuid(),
             FamilyId = familyId,
+            ChildId = childId,
             UserId = userId,
             Url = url,
             Notes = notes,
@@ -34,9 +35,9 @@ public class PhotoService
         return new PhotoResponseDto(photo.Id, photo.Url, photo.Notes, user!.FullName, photo.UploadedAt);
     }
 
-    public async Task<PagedResult<PhotoResponseDto>> GetByFamilyAsync(Guid familyId, int page, int pageSize)
+    public async Task<PagedResult<PhotoResponseDto>> GetByChildAsync(Guid childId, int page, int pageSize)
     {
-        var (items, total) = await _photos.GetByFamilyAsync(familyId, page, pageSize);
+        var (items, total) = await _photos.GetByChildAsync(childId, page, pageSize);
         var dtos = items.Select(p => new PhotoResponseDto(p.Id, p.Url, p.Notes, p.User.FullName, p.UploadedAt));
         return new PagedResult<PhotoResponseDto>(dtos, total, page, pageSize);
     }

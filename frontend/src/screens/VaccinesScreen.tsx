@@ -2,9 +2,11 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Alert, RefreshControl, Modal } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getVaccines, createVaccine, deleteVaccine } from '../api/vaccines';
+import { useAuth } from '../contexts/AuthContext';
 import { Vaccine } from '../types';
 
 export default function VaccinesScreen() {
+  const { selectedChildId } = useAuth();
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
@@ -13,21 +15,22 @@ export default function VaccinesScreen() {
   const [loading, setLoading] = useState(false);
 
   const fetch = async () => {
+    if (!selectedChildId) return;
     try {
-      const { data } = await getVaccines(1, 50);
+      const { data } = await getVaccines(selectedChildId, 1, 50);
       setVaccines(data.items);
     } catch {}
   };
 
-  useFocusEffect(useCallback(() => { fetch(); }, []));
+  useFocusEffect(useCallback(() => { fetch(); }, [selectedChildId]));
 
   const onRefresh = async () => { setRefreshing(true); await fetch(); setRefreshing(false); };
 
   const handleAdd = async () => {
-    if (!name) return Alert.alert('Error', 'Name is required.');
+    if (!name || !selectedChildId) return Alert.alert('Error', 'Name is required.');
     setLoading(true);
     try {
-      await createVaccine({ name, date: new Date().toISOString(), notes: notes || undefined });
+      await createVaccine(selectedChildId, { name, date: new Date().toISOString(), notes: notes || undefined });
       setShowAdd(false); setName(''); setNotes('');
       fetch();
     } catch (e: any) {

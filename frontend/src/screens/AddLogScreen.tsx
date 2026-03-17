@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
 import { createLog } from '../api/logs';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function AddLogScreen({ route, navigation }: any) {
+  const { selectedChildId } = useAuth();
   const presetType = route.params?.type || 'Food';
   const [type, setType] = useState<string>(presetType);
   const [duration, setDuration] = useState('');
@@ -10,9 +12,13 @@ export default function AddLogScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    if (!selectedChildId) {
+      Alert.alert('Error', 'No child selected.');
+      return;
+    }
     setLoading(true);
     try {
-      await createLog({
+      await createLog(selectedChildId, {
         type,
         timestamp: new Date().toISOString(),
         durationMinutes: type === 'Sleep' && duration ? parseInt(duration) : undefined,

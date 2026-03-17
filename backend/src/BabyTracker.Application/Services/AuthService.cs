@@ -13,12 +13,14 @@ public class AuthService
 {
     private readonly IUserRepository _users;
     private readonly IFamilyRepository _families;
+    private readonly IChildRepository _children;
     private readonly IConfiguration _config;
 
-    public AuthService(IUserRepository users, IFamilyRepository families, IConfiguration config)
+    public AuthService(IUserRepository users, IFamilyRepository families, IChildRepository children, IConfiguration config)
     {
         _users = users;
         _families = families;
+        _children = children;
         _config = config;
     }
 
@@ -38,7 +40,7 @@ public class AuthService
         };
         await _users.CreateAsync(user);
 
-        // Create a family for the first user
+        // Create a family for the new user
         var family = new Family
         {
             Id = Guid.NewGuid(),
@@ -57,7 +59,7 @@ public class AuthService
         });
 
         var token = GenerateJwt(user, family.Id);
-        return new AuthResponseDto(token, user.Email, user.FullName, family.Id);
+        return new AuthResponseDto(token, user.Email, user.FullName, family.Id, Enumerable.Empty<ChildDto>());
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
@@ -68,7 +70,15 @@ public class AuthService
 
         var familyId = await _families.GetFamilyIdForUserAsync(user.Id);
         var token = GenerateJwt(user, familyId);
-        return new AuthResponseDto(token, user.Email, user.FullName, familyId);
+
+        IEnumerable<ChildDto> childDtos = Enumerable.Empty<ChildDto>();
+        if (familyId.HasValue)
+        {
+            var kids = await _children.GetByFamilyAsync(familyId.Value);
+            childDtos = kids.Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth));
+        }
+
+        return new AuthResponseDto(token, user.Email, user.FullName, familyId, childDtos);
     }
 
     public async Task<FamilyResponseDto> JoinFamilyAsync(Guid userId, string inviteCode)
@@ -86,7 +96,8 @@ public class AuthService
         });
 
         var memberNames = family.Members.Select(m => m.User.FullName);
-        return new FamilyResponseDto(family.Id, family.Name, family.InviteCode, memberNames);
+        var childDtos = family.Children.Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth));
+        return new FamilyResponseDto(family.Id, family.Name, family.InviteCode, memberNames, childDtos);
     }
 
     // ── Helpers ───────────────────────────────────────────

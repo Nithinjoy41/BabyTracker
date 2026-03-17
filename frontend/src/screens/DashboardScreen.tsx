@@ -8,18 +8,21 @@ import { LogEntry } from '../types';
 const typeEmoji: Record<string, string> = { Food: '🍼', Nappy: '🧷', Sleep: '😴' };
 
 export default function DashboardScreen({ navigation }: any) {
-  const { fullName, signOut } = useAuth();
+  const { fullName, selectedChildId, children, signOut } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  const selectedChild = children.find(c => c.id === selectedChildId);
+
   const fetchLogs = async () => {
+    if (!selectedChildId) return;
     try {
-      const { data } = await getLogs(1, 10);
+      const { data } = await getLogs(selectedChildId, 1, 10);
       setLogs(data.items);
     } catch {}
   };
 
-  useFocusEffect(useCallback(() => { fetchLogs(); }, []));
+  useFocusEffect(useCallback(() => { fetchLogs(); }, [selectedChildId]));
 
   const onRefresh = async () => { setRefreshing(true); await fetchLogs(); setRefreshing(false); };
 
@@ -27,12 +30,17 @@ export default function DashboardScreen({ navigation }: any) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Hello, {fullName} 👋</Text>
-          <Text style={styles.sub}>Here's today's summary</Text>
+          <Text style={styles.greeting}>{selectedChild?.name}'s Dashboard 👶</Text>
+          <Text style={styles.sub}>Logged in as {fullName}</Text>
         </View>
-        <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => navigation.navigate('ChildPicker')} style={styles.switchBtn}>
+            <Text style={styles.switchText}>Switch</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Quick-action buttons */}
@@ -71,10 +79,13 @@ export default function DashboardScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5FF', padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 8 },
-  greeting: { fontSize: 24, fontWeight: '700', color: '#333' },
-  sub: { fontSize: 14, color: '#888', marginTop: 2 },
-  logoutBtn: { backgroundColor: '#FF6B6B', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  logoutText: { color: '#fff', fontWeight: '600' },
+  greeting: { fontSize: 22, fontWeight: '700', color: '#333' },
+  sub: { fontSize: 13, color: '#888', marginTop: 2 },
+  headerActions: { flexDirection: 'row', gap: 8 },
+  switchBtn: { backgroundColor: '#6C63FF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  switchText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  logoutBtn: { backgroundColor: '#FF6B6B', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  logoutText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   actions: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   actionBtn: { flex: 1, backgroundColor: '#fff', marginHorizontal: 4, borderRadius: 14, padding: 16, alignItems: 'center', elevation: 2, shadowColor: '#6C63FF', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6 },
   actionEmoji: { fontSize: 32 },

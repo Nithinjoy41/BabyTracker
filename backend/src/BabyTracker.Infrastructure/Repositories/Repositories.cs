@@ -28,10 +28,13 @@ public class FamilyRepository : IFamilyRepository
     public FamilyRepository(BabyTrackerDbContext db) => _db = db;
 
     public async Task<Family?> GetByIdAsync(Guid id) =>
-        await _db.Families.Include(f => f.Members).ThenInclude(m => m.User).FirstOrDefaultAsync(f => f.Id == id);
+        await _db.Families.Include(f => f.Members).ThenInclude(m => m.User)
+            .Include(f => f.Children)
+            .FirstOrDefaultAsync(f => f.Id == id);
 
     public async Task<Family?> GetByInviteCodeAsync(string inviteCode) =>
         await _db.Families.Include(f => f.Members).ThenInclude(m => m.User)
+            .Include(f => f.Children)
             .FirstOrDefaultAsync(f => f.InviteCode == inviteCode);
 
     public async Task<Family> CreateAsync(Family family)
@@ -55,6 +58,32 @@ public class FamilyRepository : IFamilyRepository
     }
 }
 
+public class ChildRepository : IChildRepository
+{
+    private readonly BabyTrackerDbContext _db;
+    public ChildRepository(BabyTrackerDbContext db) => _db = db;
+
+    public async Task<Child?> GetByIdAsync(Guid id) => await _db.Children.FindAsync(id);
+
+    public async Task<IEnumerable<Child>> GetByFamilyAsync(Guid familyId) =>
+        await _db.Children.Where(c => c.FamilyId == familyId)
+            .OrderBy(c => c.DateOfBirth)
+            .ToListAsync();
+
+    public async Task<Child> CreateAsync(Child child)
+    {
+        _db.Children.Add(child);
+        await _db.SaveChangesAsync();
+        return child;
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var child = await _db.Children.FindAsync(id);
+        if (child is not null) { _db.Children.Remove(child); await _db.SaveChangesAsync(); }
+    }
+}
+
 public class LogRepository : ILogRepository
 {
     private readonly BabyTrackerDbContext _db;
@@ -62,9 +91,9 @@ public class LogRepository : ILogRepository
 
     public async Task<LogEntry?> GetByIdAsync(Guid id) => await _db.LogEntries.FindAsync(id);
 
-    public async Task<(IEnumerable<LogEntry> Items, int TotalCount)> GetByFamilyAsync(Guid familyId, int page, int pageSize)
+    public async Task<(IEnumerable<LogEntry> Items, int TotalCount)> GetByChildAsync(Guid childId, int page, int pageSize)
     {
-        var query = _db.LogEntries.Where(l => l.FamilyId == familyId).Include(l => l.User)
+        var query = _db.LogEntries.Where(l => l.ChildId == childId).Include(l => l.User)
             .OrderByDescending(l => l.Timestamp);
         var total = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -92,9 +121,9 @@ public class VaccineRepository : IVaccineRepository
 
     public async Task<Vaccine?> GetByIdAsync(Guid id) => await _db.Vaccines.FindAsync(id);
 
-    public async Task<(IEnumerable<Vaccine> Items, int TotalCount)> GetByFamilyAsync(Guid familyId, int page, int pageSize)
+    public async Task<(IEnumerable<Vaccine> Items, int TotalCount)> GetByChildAsync(Guid childId, int page, int pageSize)
     {
-        var query = _db.Vaccines.Where(v => v.FamilyId == familyId).Include(v => v.User)
+        var query = _db.Vaccines.Where(v => v.ChildId == childId).Include(v => v.User)
             .OrderByDescending(v => v.Date);
         var total = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -122,9 +151,9 @@ public class PhotoRepository : IPhotoRepository
 
     public async Task<Photo?> GetByIdAsync(Guid id) => await _db.Photos.FindAsync(id);
 
-    public async Task<(IEnumerable<Photo> Items, int TotalCount)> GetByFamilyAsync(Guid familyId, int page, int pageSize)
+    public async Task<(IEnumerable<Photo> Items, int TotalCount)> GetByChildAsync(Guid childId, int page, int pageSize)
     {
-        var query = _db.Photos.Where(p => p.FamilyId == familyId).Include(p => p.User)
+        var query = _db.Photos.Where(p => p.ChildId == childId).Include(p => p.User)
             .OrderByDescending(p => p.UploadedAt);
         var total = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
