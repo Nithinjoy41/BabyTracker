@@ -133,10 +133,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Auto-create database in dev (supports both SQLite and PostgreSQL)
-if (app.Environment.IsDevelopment())
+// Auto-create database (supports both SQLite and PostgreSQL)
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<BabyTrackerDbContext>();
     db.Database.EnsureCreated();
 }
