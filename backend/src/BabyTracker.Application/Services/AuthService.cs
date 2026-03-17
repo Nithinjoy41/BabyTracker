@@ -94,7 +94,7 @@ public class AuthService
             // Backwards compatibility for old static family invite codes temporarily
             family = await _families.GetByInviteCodeAsync(inviteCode);
             if (family is null)
-                throw new InvalidOperationException("Invalid invite code.");
+                throw new InvalidOperationException("Invalid invite code. Please check the code and try again.");
             
             await JoinExistingFamily(userId, family);
         }
@@ -110,7 +110,7 @@ public class AuthService
             invite.IsUsed = true;
             await _invites.UpdateAsync(invite);
             
-            family = await _families.GetByIdAsync(invite.FamilyId) ?? throw new InvalidOperationException("Family not found");
+            family = await _families.GetByIdAsync(invite.FamilyId) ?? throw new InvalidOperationException("The family associated with this invite no longer exists.");
             await JoinExistingFamily(userId, family);
         }
 
@@ -130,6 +130,9 @@ public class AuthService
 
     private async Task JoinExistingFamily(Guid userId, Family family)
     {
+        var existing = await _families.GetMemberAsync(userId, family.Id);
+        if (existing is not null) return; // Already a member
+
         await _families.AddMemberAsync(new FamilyMember
         {
             Id = Guid.NewGuid(),

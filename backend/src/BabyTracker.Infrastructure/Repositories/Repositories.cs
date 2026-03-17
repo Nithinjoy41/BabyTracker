@@ -35,7 +35,7 @@ public class FamilyRepository : IFamilyRepository
     public async Task<Family?> GetByInviteCodeAsync(string inviteCode) =>
         await _db.Families.Include(f => f.Members).ThenInclude(m => m.User)
             .Include(f => f.Children)
-            .FirstOrDefaultAsync(f => f.InviteCode == inviteCode);
+            .FirstOrDefaultAsync(f => f.InviteCode.ToLower() == inviteCode.ToLower());
 
     public async Task<Family> CreateAsync(Family family)
     {
@@ -200,7 +200,8 @@ public class InviteRepository : IInviteRepository
     public async Task<FamilyInvite?> GetByIdAsync(Guid id) => await _db.FamilyInvites.FindAsync(id);
 
     public async Task<FamilyInvite?> GetByCodeAsync(string code) =>
-        await _db.FamilyInvites.Include(i => i.Family).FirstOrDefaultAsync(i => i.Code == code);
+        await _db.FamilyInvites.Include(i => i.Family)
+            .FirstOrDefaultAsync(i => i.Code.ToLower() == code.ToLower());
 
     public async Task<FamilyInvite> CreateAsync(FamilyInvite invite)
     {
