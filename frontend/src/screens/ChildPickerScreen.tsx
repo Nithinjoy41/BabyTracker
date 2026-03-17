@@ -73,9 +73,13 @@ export default function ChildPickerScreen({ navigation }: any) {
 
   const handleSelectChild = async (id: string) => {
     await selectChild(id);
-    if (navigation?.canGoBack()) {
-      navigation.goBack();
-    }
+    // On mobile web/browsers, state propagation can sometimes be racey with navigation.
+    // Adding a tiny delay to ensure the Auth state correctly triggers the AppNavigator's switch.
+    setTimeout(() => {
+      if (navigation?.canGoBack()) {
+        navigation.goBack();
+      }
+    }, 100);
   };
 
   return (
