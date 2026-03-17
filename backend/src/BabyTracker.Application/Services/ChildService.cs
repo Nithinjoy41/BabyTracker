@@ -22,7 +22,7 @@ public class ChildService
             Id = Guid.NewGuid(),
             FamilyId = familyId,
             Name = dto.Name,
-            DateOfBirth = dto.DateOfBirth,
+            DateOfBirth = DateTime.SpecifyKind(dto.DateOfBirth, DateTimeKind.Utc),
             CreatedAt = DateTime.UtcNow
         };
         await _children.CreateAsync(child);
