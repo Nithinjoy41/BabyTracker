@@ -148,6 +148,19 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BabyTrackerDbContext>();
+    try
+    {
+        // Try to query the new Children table.
+        // If it fails (e.g. table doesn't exist), we know the schema is old.
+        _ = db.Children.Take(1).ToList();
+    }
+    catch
+    {
+        // If it throws an exception, the schema is outdated.
+        // Drop the old tables/database and recreate.
+        db.Database.EnsureDeleted();
+    }
+    
     db.Database.EnsureCreated();
 }
 
