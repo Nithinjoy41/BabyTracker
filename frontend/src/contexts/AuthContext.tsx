@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as authApi from '../api/auth';
+import * as childrenApi from '../api/children';
 import { Child, AuthResponse } from '../types';
 
 interface AuthState {
@@ -20,6 +21,7 @@ interface AuthContextType extends AuthState {
   selectChild: (childId: string) => Promise<void>;
   setChildren: (children: Child[]) => void;
   joinFamilySuccess: (data: AuthResponse) => Promise<void>;
+  refreshChildren: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,8 +99,13 @@ export const AuthProvider = ({ children: childrenProp }: { children: ReactNode }
     await saveAuth(data);
   };
 
+  const refreshChildren = async () => {
+    const { data } = await childrenApi.getChildren();
+    setChildrenState(data);
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, signIn, signUp, signOut, selectChild, setChildren: setChildrenState, joinFamilySuccess }}>
+    <AuthContext.Provider value={{ ...state, signIn, signUp, signOut, selectChild, setChildren: setChildrenState, joinFamilySuccess, refreshChildren }}>
       {childrenProp}
     </AuthContext.Provider>
   );

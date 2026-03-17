@@ -9,7 +9,7 @@ import { joinFamily } from '../api/auth';
 import { Child } from '../types';
 
 export default function ChildPickerScreen({ navigation }: any) {
-  const { children, selectChild, setChildren, joinFamilySuccess, signOut } = useAuth();
+  const { children, selectChild, setChildren, joinFamilySuccess, refreshChildren, signOut } = useAuth();
   const [showAddChild, setShowAddChild] = useState(false);
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [childName, setChildName] = useState('');
@@ -110,6 +110,9 @@ export default function ChildPickerScreen({ navigation }: any) {
           <Text style={styles.emptyEmoji}>🍼</Text>
           <Text style={styles.emptyTitle}>No children yet</Text>
           <Text style={styles.emptySubtitle}>Add your child or join a family with an invite code</Text>
+          <TouchableOpacity onPress={refreshChildren} style={styles.refreshBtn}>
+            <Text style={styles.refreshText}>🔄 Tap to Refresh</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -214,4 +217,6 @@ const styles = StyleSheet.create({
   modalBtn: { backgroundColor: '#6C63FF', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 4 },
   modalBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   cancelText: { color: '#888', textAlign: 'center', marginTop: 14, fontSize: 15 },
+  refreshBtn: { marginTop: 20, backgroundColor: '#E0E0FF', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
+  refreshText: { color: '#6C63FF', fontWeight: '700', fontSize: 15 },
 });
