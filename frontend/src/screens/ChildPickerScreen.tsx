@@ -41,6 +41,11 @@ export default function ChildPickerScreen({ navigation }: any) {
     setLoading(false);
   };
 
+  const handleJoinFamily = async () => {
+    if (!inviteCode.trim()) {
+      setErrorMsg('Please enter an invite code.');
+      return;
+    }
     try {
       setLoading(true);
       setErrorMsg(null);
