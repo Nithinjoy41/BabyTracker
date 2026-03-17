@@ -154,7 +154,7 @@ using (var scope = app.Services.CreateScope())
     {
         // Try to query the new FamilyInvites table.
         // If it fails (e.g. table doesn't exist), we know the schema is old.
-        _ = db.FamilyInvites.Take(1).ToList();
+        _ = db.FamilyInvites.OrderBy(i => i.Id).Take(1).ToList();
     }
     catch
     {
