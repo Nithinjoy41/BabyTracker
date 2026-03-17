@@ -8,6 +8,7 @@ const API_URL = 'https://babytracker-jzzc.onrender.com/api';
 const client = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 30000,
 });
 
 // Attach JWT from AsyncStorage on every request

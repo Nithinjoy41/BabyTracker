@@ -45,17 +45,32 @@ export default function ChildPickerScreen({ navigation }: any) {
       Alert.alert('Required', 'Please enter an invite code.');
       return;
     }
-    setLoading(true);
     try {
+      console.log('Joining family with code:', inviteCode.trim());
       const { data } = await joinFamily(inviteCode.trim());
+      console.log('Join success, refreshing session...');
       await joinFamilySuccess(data);
       setShowJoinFamily(false);
       setInviteCode('');
       Alert.alert('Success', 'Joined family! You can now see their children.');
     } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.error || 'Invalid invite code.');
+      console.error('Join family error:', e);
+      const msg = e.response?.data?.error || e.message || 'Check your connection and try again.';
+      Alert.alert('Error', `Could not join: ${msg}`);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleRefreshChildren = async () => {
+    setLoading(true); // Added setLoading(true) here
+    try {
+      await refreshChildren();
+    } catch (e) {
+      Alert.alert('Error', 'Could not refresh children.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getAge = (dob: string) => {
@@ -110,7 +125,7 @@ export default function ChildPickerScreen({ navigation }: any) {
           <Text style={styles.emptyEmoji}>🍼</Text>
           <Text style={styles.emptyTitle}>No children yet</Text>
           <Text style={styles.emptySubtitle}>Add your child or join a family with an invite code</Text>
-          <TouchableOpacity onPress={refreshChildren} style={styles.refreshBtn}>
+          <TouchableOpacity onPress={handleRefreshChildren} style={styles.refreshBtn}>
             <Text style={styles.refreshText}>🔄 Tap to Refresh</Text>
           </TouchableOpacity>
         </View>
