@@ -46,6 +46,7 @@ export default function ChildPickerScreen({ navigation }: any) {
       return;
     }
     try {
+      setLoading(true);
       console.log('Joining family with code:', inviteCode.trim());
       const { data } = await joinFamily(inviteCode.trim());
       console.log('Join success, refreshing session...');
