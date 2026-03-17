@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BabyTracker.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1e2dc09141b05b779a40c8218f2dabdf9cd59cb8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e4646257d03c77a5120298e9966bbfeb5a18388e")]
 [assembly: System.Reflection.AssemblyProductAttribute("BabyTracker.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BabyTracker.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

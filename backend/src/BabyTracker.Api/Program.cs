@@ -152,9 +152,9 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<BabyTrackerDbContext>();
     try
     {
-        // Try to query the new Children table.
+        // Try to query the new FamilyInvites table.
         // If it fails (e.g. table doesn't exist), we know the schema is old.
-        _ = db.Children.Take(1).ToList();
+        _ = db.FamilyInvites.Take(1).ToList();
     }
     catch
     {
@@ -163,7 +163,7 @@ using (var scope = app.Services.CreateScope())
         {
             // Neon DB: drop the tables manually instead of dropping the entire DB
             // because dropping the DB breaks connections and permissions on managed hosts.
-            db.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS \"FamilyMembers\", \"LogEntries\", \"Photos\", \"Vaccines\", \"Children\", \"Families\", \"Users\" CASCADE;");
+            db.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS \"FamilyInvites\", \"FamilyMembers\", \"LogEntries\", \"Photos\", \"Vaccines\", \"Children\", \"Families\", \"Users\" CASCADE;");
         }
         else
         {
