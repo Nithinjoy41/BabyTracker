@@ -56,43 +56,35 @@ export default function AppNavigator() {
     );
   }
 
-  // Not logged in → show auth screens
-  if (!token) {
-    return (
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="Auth" component={AuthNavigator} />
-      </RootStack.Navigator>
-    );
-  }
-
-  // Logged in but no child selected → show child picker
-  if (!selectedChildId || children.length === 0) {
-    return (
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="ChildPicker" component={ChildPickerScreen} />
-      </RootStack.Navigator>
-    );
-  }
-
-  // Logged in with child selected → show main app
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      <RootStack.Screen name="Main" component={MainTabs} />
-      <RootStack.Screen
-        name="AddLog"
-        component={AddLogScreen}
-        options={{ headerShown: true, title: 'Add Log Entry', headerStyle: { backgroundColor: '#6C63FF' }, headerTintColor: '#fff' }}
-      />
-      <RootStack.Screen
-        name="ChildPicker"
-        component={ChildPickerScreen}
-        options={{ headerShown: true, title: 'Switch Child', headerStyle: { backgroundColor: '#6C63FF' }, headerTintColor: '#fff' }}
-      />
-      <RootStack.Screen
-        name="PhotoViewer"
-        component={PhotoViewerScreen}
-        options={{ headerShown: false, presentation: 'fullScreenModal' }}
-      />
+      {!token ? (
+        // Auth Stack
+        <RootStack.Screen name="Auth" component={AuthNavigator} />
+      ) : !selectedChildId || children.length === 0 ? (
+        // Initial Child Picker
+        <RootStack.Screen name="ChildPicker" component={ChildPickerScreen} />
+      ) : (
+        // Main App
+        <>
+          <RootStack.Screen name="Main" component={MainTabs} />
+          <RootStack.Screen
+            name="AddLog"
+            component={AddLogScreen}
+            options={{ headerShown: true, title: 'Add Log Entry', headerStyle: { backgroundColor: '#6C63FF' }, headerTintColor: '#fff' }}
+          />
+          <RootStack.Screen
+            name="ChildPicker"
+            component={ChildPickerScreen}
+            options={{ headerShown: true, title: 'Switch Child', headerStyle: { backgroundColor: '#6C63FF' }, headerTintColor: '#fff' }}
+          />
+          <RootStack.Screen
+            name="PhotoViewer"
+            component={PhotoViewerScreen}
+            options={{ headerShown: false, presentation: 'fullScreenModal' }}
+          />
+        </>
+      )}
     </RootStack.Navigator>
   );
 }
