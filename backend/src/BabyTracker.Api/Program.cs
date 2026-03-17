@@ -157,8 +157,17 @@ using (var scope = app.Services.CreateScope())
     catch
     {
         // If it throws an exception, the schema is outdated.
-        // Drop the old tables/database and recreate.
-        db.Database.EnsureDeleted();
+        if (db.Database.IsNpgsql())
+        {
+            // Neon DB: drop the tables manually instead of dropping the entire DB
+            // because dropping the DB breaks connections and permissions on managed hosts.
+            db.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS \"FamilyMembers\", \"LogEntries\", \"Photos\", \"Vaccines\", \"Children\", \"Families\", \"Users\" CASCADE;");
+        }
+        else
+        {
+            // SQLite: Safe to just delete the local file
+            db.Database.EnsureDeleted();
+        }
     }
     
     db.Database.EnsureCreated();
