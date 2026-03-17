@@ -21,6 +21,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var useSqlite = string.IsNullOrEmpty(connectionString) ||
                 builder.Configuration.GetValue<bool>("UseSqlite");
 
+// Convert postgresql:// URL to ADO.NET key-value format (Neon gives URL format but Npgsql needs key-value)
+if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgresql://"))
+{
+    var uri = new Uri(connectionString);
+    var userInfo = uri.UserInfo.Split(':');
+    var query = uri.Query.TrimStart('?');
+    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true;";
+}
+
 builder.Services.AddDbContext<BabyTrackerDbContext>(opt =>
 {
     if (useSqlite)
