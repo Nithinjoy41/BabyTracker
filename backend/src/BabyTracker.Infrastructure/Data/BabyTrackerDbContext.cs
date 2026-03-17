@@ -15,6 +15,7 @@ public class BabyTrackerDbContext : DbContext
     public DbSet<LogEntry> LogEntries => Set<LogEntry>();
     public DbSet<Vaccine> Vaccines => Set<Vaccine>();
     public DbSet<Photo> Photos => Set<Photo>();
+    public DbSet<FamilyInvite> FamilyInvites { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

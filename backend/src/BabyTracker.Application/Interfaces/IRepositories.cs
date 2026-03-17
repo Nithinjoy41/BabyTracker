@@ -26,6 +26,14 @@ public interface IChildRepository
     Task DeleteAsync(Guid id);
 }
 
+public interface IInviteRepository
+{
+    Task<FamilyInvite?> GetByIdAsync(Guid id);
+    Task<FamilyInvite?> GetByCodeAsync(string code);
+    Task<FamilyInvite> CreateAsync(FamilyInvite invite);
+    Task DeleteAsync(Guid id);
+}
+
 public interface ILogRepository
 {
     Task<LogEntry?> GetByIdAsync(Guid id);

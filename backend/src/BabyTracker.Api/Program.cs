@@ -45,6 +45,7 @@ builder.Services.AddScoped<IChildRepository, ChildRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IVaccineRepository, VaccineRepository>();
 builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
+builder.Services.AddScoped<IInviteRepository, InviteRepository>();
 
 // ── Services ──────────────────────────────────────────
 builder.Services.AddScoped<AuthService>();
@@ -52,6 +53,7 @@ builder.Services.AddScoped<ChildService>();
 builder.Services.AddScoped<LogService>();
 builder.Services.AddScoped<VaccineService>();
 builder.Services.AddScoped<PhotoService>();
+builder.Services.AddScoped<InviteService>();
 
 // ── File Storage ──────────────────────────────────────
 var cloudinaryName = builder.Configuration["Cloudinary:CloudName"];

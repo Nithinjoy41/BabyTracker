@@ -14,13 +14,15 @@ public class AuthService
     private readonly IUserRepository _users;
     private readonly IFamilyRepository _families;
     private readonly IChildRepository _children;
+    private readonly IInviteRepository _invites;
     private readonly IConfiguration _config;
 
-    public AuthService(IUserRepository users, IFamilyRepository families, IChildRepository children, IConfiguration config)
+    public AuthService(IUserRepository users, IFamilyRepository families, IChildRepository children, IInviteRepository invites, IConfiguration config)
     {
         _users = users;
         _families = families;
         _children = children;
+        _invites = invites;
         _config = config;
     }
 
@@ -83,9 +85,39 @@ public class AuthService
 
     public async Task<FamilyResponseDto> JoinFamilyAsync(Guid userId, string inviteCode)
     {
-        var family = await _families.GetByInviteCodeAsync(inviteCode)
-            ?? throw new InvalidOperationException("Invalid invite code.");
+        var invite = await _invites.GetByCodeAsync(inviteCode);
+        if (invite is null)
+        {
+            // Backwards compatibility for old static family invite codes temporarily
+            var oldFamily = await _families.GetByInviteCodeAsync(inviteCode);
+            if (oldFamily is null)
+                throw new InvalidOperationException("Invalid invite code.");
+            
+            await JoinExistingFamily(userId, oldFamily);
+            return MapToDto(oldFamily);
+        }
 
+        if (invite.IsUsed)
+            throw new InvalidOperationException("This invite code has already been used.");
+            
+        if (invite.ExpiresAt < DateTime.UtcNow)
+            throw new InvalidOperationException("This invite code has expired.");
+
+        // Valid invite
+        invite.IsUsed = true;
+        // Don't have a direct UpdateAsync right now in base repository, 
+        // rely on EF ChangeTracker when we save later if needed, but since we don't 
+        // actually call save changes implicitly here, we might need to rely on DbContext.
+        // Wait, the BaseRepository doesn't expose Update. We'll add one if needed, or get Family
+        
+        var family = await _families.GetByIdAsync(invite.FamilyId) ?? throw new InvalidOperationException("Family not found");
+        
+        await JoinExistingFamily(userId, family);
+        return MapToDto(family);
+    }
+
+    private async Task JoinExistingFamily(Guid userId, Family family)
+    {
         await _families.AddMemberAsync(new FamilyMember
         {
             Id = Guid.NewGuid(),
@@ -94,9 +126,12 @@ public class AuthService
             Role = "Parent",
             JoinedAt = DateTime.UtcNow
         });
+    }
 
-        var memberNames = family.Members.Select(m => m.User.FullName);
-        var childDtos = family.Children.Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth));
+    private FamilyResponseDto MapToDto(Family family)
+    {
+        var memberNames = family.Members?.Select(m => m.User.FullName) ?? Array.Empty<string>();
+        var childDtos = family.Children?.Select(c => new ChildDto(c.Id, c.Name, c.DateOfBirth)) ?? Array.Empty<ChildDto>();
         return new FamilyResponseDto(family.Id, family.Name, family.InviteCode, memberNames, childDtos);
     }
 

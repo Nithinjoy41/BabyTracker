@@ -1,4 +1,6 @@
+using BabyTracker.Application.DTOs;
 using BabyTracker.Application.Interfaces;
+using BabyTracker.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,8 +11,21 @@ namespace BabyTracker.Api.Controllers;
 public class FamilyController : BaseApiController
 {
     private readonly IFamilyRepository _families;
+    private readonly InviteService _invites;
 
-    public FamilyController(IFamilyRepository families) => _families = families;
+    public FamilyController(IFamilyRepository families, InviteService invites)
+    {
+        _families = families;
+        _invites = invites;
+    }
+
+    [HttpPost("invite")]
+    public async Task<IActionResult> GenerateInvite([FromBody] GenerateInviteDto dto)
+    {
+        var familyId = GetFamilyId();
+        var code = await _invites.GenerateInviteAsync(familyId, dto.Email);
+        return Ok(new InviteResponseDto(code, DateTime.UtcNow.AddDays(7)));
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetMyFamily()

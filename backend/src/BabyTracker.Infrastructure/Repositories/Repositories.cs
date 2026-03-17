@@ -173,3 +173,27 @@ public class PhotoRepository : IPhotoRepository
         if (entry is not null) { _db.Photos.Remove(entry); await _db.SaveChangesAsync(); }
     }
 }
+
+public class InviteRepository : IInviteRepository
+{
+    private readonly BabyTrackerDbContext _db;
+    public InviteRepository(BabyTrackerDbContext db) => _db = db;
+
+    public async Task<FamilyInvite?> GetByIdAsync(Guid id) => await _db.FamilyInvites.FindAsync(id);
+
+    public async Task<FamilyInvite?> GetByCodeAsync(string code) =>
+        await _db.FamilyInvites.Include(i => i.Family).FirstOrDefaultAsync(i => i.Code == code);
+
+    public async Task<FamilyInvite> CreateAsync(FamilyInvite invite)
+    {
+        _db.FamilyInvites.Add(invite);
+        await _db.SaveChangesAsync();
+        return invite;
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var invite = await _db.FamilyInvites.FindAsync(id);
+        if (invite is not null) { _db.FamilyInvites.Remove(invite); await _db.SaveChangesAsync(); }
+    }
+}

@@ -23,8 +23,10 @@ public record VaccineResponseDto(Guid Id, string Name, DateTime Date, string? No
 // ── Photo ─────────────────────────────────────────────
 public record PhotoResponseDto(Guid Id, string Url, string? Notes, string UploadedBy, DateTime UploadedAt);
 
-// ── Family ────────────────────────────────────────────
+// ── Family & Invites ──────────────────────────────────
 public record FamilyResponseDto(Guid Id, string Name, string InviteCode, IEnumerable<string> Members, IEnumerable<ChildDto> Children);
+public record GenerateInviteDto(string? Email);
+public record InviteResponseDto(string Code, DateTime ExpiresAt);
 
 // ── Pagination ────────────────────────────────────────
 public record PagedResult<T>(IEnumerable<T> Items, int TotalCount, int Page, int PageSize);
