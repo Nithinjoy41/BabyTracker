@@ -16,6 +16,7 @@ export default function ChildPickerScreen({ navigation }: any) {
   const [childDob, setChildDob] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleAddChild = async () => {
     if (!childName.trim() || !childDob.trim()) {
@@ -40,24 +41,27 @@ export default function ChildPickerScreen({ navigation }: any) {
     setLoading(false);
   };
 
-  const handleJoinFamily = async () => {
-    if (!inviteCode.trim()) {
-      Alert.alert('Required', 'Please enter an invite code.');
-      return;
-    }
     try {
       setLoading(true);
-      console.log('Joining family with code:', inviteCode.trim());
+      setErrorMsg(null);
+      console.log('[JOIN] Starting join for code:', inviteCode.trim());
+      
       const { data } = await joinFamily(inviteCode.trim());
-      console.log('Join success, refreshing session...');
+      console.log('[JOIN] Success, payload:', data);
+      
       await joinFamilySuccess(data);
+      console.log('[JOIN] Session updated');
+      
       setShowJoinFamily(false);
       setInviteCode('');
-      Alert.alert('Success', 'Joined family! You can now see their children.');
     } catch (e: any) {
-      console.error('Join family error:', e);
-      const msg = e.response?.data?.error || e.message || 'Check your connection and try again.';
-      Alert.alert('Error', `Could not join: ${msg}`);
+      console.error('[JOIN] Failed:', e);
+      const msg = e.response?.data?.error || e.message || 'Check connection';
+      setErrorMsg(msg);
+      // Fallback alert for environments that support it
+      if (Platform.OS !== 'web') {
+        Alert.alert('Error', `Could not join: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -184,6 +188,11 @@ export default function ChildPickerScreen({ navigation }: any) {
               onChangeText={setInviteCode}
               autoCapitalize="characters"
             />
+            {errorMsg && (
+              <Text style={{ color: '#FF4D4D', marginBottom: 10, textAlign: 'center' }}>
+                ❌ {errorMsg}
+              </Text>
+            )}
             <TouchableOpacity style={styles.modalBtn} onPress={handleJoinFamily} disabled={loading}>
               <Text style={styles.modalBtnText}>{loading ? 'Joining...' : 'Join Family'}</Text>
             </TouchableOpacity>
