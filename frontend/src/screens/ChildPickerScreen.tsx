@@ -48,7 +48,7 @@ export default function ChildPickerScreen({ navigation }: any) {
     setLoading(true);
     try {
       const { data } = await joinFamily(inviteCode.trim());
-      joinFamilySuccess(data);
+      await joinFamilySuccess(data);
       setShowJoinFamily(false);
       setInviteCode('');
       Alert.alert('Success', 'Joined family! You can now see their children.');

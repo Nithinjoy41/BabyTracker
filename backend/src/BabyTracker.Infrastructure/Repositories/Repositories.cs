@@ -69,11 +69,9 @@ public class FamilyRepository : IFamilyRepository
 
     public async Task<IEnumerable<Family>> GetFamiliesForUserAsync(Guid userId)
     {
-        return await _db.FamilyMembers
-            .Where(m => m.UserId == userId)
-            .Include(m => m.Family)
-            .ThenInclude(f => f.Children)
-            .Select(m => m.Family)
+        return await _db.Families
+            .Include(f => f.Children)
+            .Where(f => f.Members.Any(m => m.UserId == userId))
             .ToListAsync();
     }
 }
