@@ -9,7 +9,7 @@ import { joinFamily } from '../api/auth';
 import { Child } from '../types';
 
 export default function ChildPickerScreen({ navigation }: any) {
-  const { children, selectChild, setChildren, familyId, signOut } = useAuth();
+  const { children, selectChild, setChildren, joinFamilySuccess, signOut } = useAuth();
   const [showAddChild, setShowAddChild] = useState(false);
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [childName, setChildName] = useState('');
@@ -48,9 +48,7 @@ export default function ChildPickerScreen({ navigation }: any) {
     setLoading(true);
     try {
       const { data } = await joinFamily(inviteCode.trim());
-      if (data.children && data.children.length > 0) {
-        setChildren(data.children);
-      }
+      joinFamilySuccess(data.id, data.children || []);
       setShowJoinFamily(false);
       setInviteCode('');
       Alert.alert('Success', `Joined ${data.name}! You can now see their children.`);

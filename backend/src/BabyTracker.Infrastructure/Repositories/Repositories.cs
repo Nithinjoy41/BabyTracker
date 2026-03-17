@@ -56,6 +56,16 @@ public class FamilyRepository : IFamilyRepository
         var membership = await _db.FamilyMembers.FirstOrDefaultAsync(m => m.UserId == userId);
         return membership?.FamilyId;
     }
+
+    public async Task<FamilyMember> UpdateMemberAsync(FamilyMember member)
+    {
+        _db.FamilyMembers.Update(member);
+        await _db.SaveChangesAsync();
+        return member;
+    }
+
+    public async Task<FamilyMember?> GetMemberAsync(Guid userId, Guid familyId) =>
+        await _db.FamilyMembers.FirstOrDefaultAsync(fm => fm.UserId == userId && fm.FamilyId == familyId);
 }
 
 public class ChildRepository : IChildRepository
@@ -187,6 +197,13 @@ public class InviteRepository : IInviteRepository
     public async Task<FamilyInvite> CreateAsync(FamilyInvite invite)
     {
         _db.FamilyInvites.Add(invite);
+        await _db.SaveChangesAsync();
+        return invite;
+    }
+
+    public async Task<FamilyInvite> UpdateAsync(FamilyInvite invite)
+    {
+        _db.FamilyInvites.Update(invite);
         await _db.SaveChangesAsync();
         return invite;
     }

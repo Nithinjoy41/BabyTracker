@@ -85,7 +85,9 @@ public class AuthService
 
     public async Task<FamilyResponseDto> JoinFamilyAsync(Guid userId, string inviteCode)
     {
+        inviteCode = inviteCode.Trim().ToUpperInvariant();
         var invite = await _invites.GetByCodeAsync(inviteCode);
+        
         if (invite is null)
         {
             // Backwards compatibility for old static family invite codes temporarily
@@ -105,15 +107,15 @@ public class AuthService
 
         // Valid invite
         invite.IsUsed = true;
-        // Don't have a direct UpdateAsync right now in base repository, 
-        // rely on EF ChangeTracker when we save later if needed, but since we don't 
-        // actually call save changes implicitly here, we might need to rely on DbContext.
-        // Wait, the BaseRepository doesn't expose Update. We'll add one if needed, or get Family
+        await _invites.UpdateAsync(invite);
         
         var family = await _families.GetByIdAsync(invite.FamilyId) ?? throw new InvalidOperationException("Family not found");
         
         await JoinExistingFamily(userId, family);
-        return MapToDto(family);
+
+        // Fetch again to get updated members
+        var updatedFamily = await _families.GetByIdAsync(family.Id);
+        return MapToDto(updatedFamily ?? family);
     }
 
     private async Task JoinExistingFamily(Guid userId, Family family)

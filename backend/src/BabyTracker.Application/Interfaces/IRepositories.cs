@@ -15,6 +15,8 @@ public interface IFamilyRepository
     Task<Family?> GetByInviteCodeAsync(string inviteCode);
     Task<Family> CreateAsync(Family family);
     Task<FamilyMember> AddMemberAsync(FamilyMember member);
+    Task<FamilyMember> UpdateMemberAsync(FamilyMember member);
+    Task<FamilyMember?> GetMemberAsync(Guid userId, Guid familyId);
     Task<Guid?> GetFamilyIdForUserAsync(Guid userId);
 }
 
@@ -31,6 +33,7 @@ public interface IInviteRepository
     Task<FamilyInvite?> GetByIdAsync(Guid id);
     Task<FamilyInvite?> GetByCodeAsync(string code);
     Task<FamilyInvite> CreateAsync(FamilyInvite invite);
+    Task<FamilyInvite> UpdateAsync(FamilyInvite invite);
     Task DeleteAsync(Guid id);
 }
 

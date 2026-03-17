@@ -19,6 +19,7 @@ interface AuthContextType extends AuthState {
   signOut: () => Promise<void>;
   selectChild: (childId: string) => Promise<void>;
   setChildren: (children: Child[]) => void;
+  joinFamilySuccess: (familyId: string, children: Child[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,8 +93,14 @@ export const AuthProvider = ({ children: childrenProp }: { children: ReactNode }
     setState(prev => ({ ...prev, children: kids }));
   };
 
+  const joinFamilySuccess = (fId: string, kids: Child[]) => {
+    AsyncStorage.setItem('familyId', fId);
+    AsyncStorage.setItem('children', JSON.stringify(kids));
+    setState(prev => ({ ...prev, familyId: fId, children: kids }));
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, signIn, signUp, signOut, selectChild, setChildren: setChildrenState }}>
+    <AuthContext.Provider value={{ ...state, signIn, signUp, signOut, selectChild, setChildren: setChildrenState, joinFamilySuccess }}>
       {childrenProp}
     </AuthContext.Provider>
   );
