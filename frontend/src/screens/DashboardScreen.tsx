@@ -1,14 +1,14 @@
 import React, { useCallback, useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl,
-  Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView
+  Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { getLogs } from '../api/logs';
-import { generateInvite } from '../api/family';
-import { LogEntry } from '../types';
+import { getLogs, deleteLog } from '../api/logs';
+import { generateInvite, getFamily, removeMember } from '../api/family';
+import { LogEntry, Family } from '../types';
 
 const typeEmoji: Record<string, string> = { Food: '🍼', Nappy: '🧷', Sleep: '😴' };
 
@@ -22,6 +22,8 @@ export default function DashboardScreen({ navigation }: any) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [familyData, setFamilyData] = useState<any>(null);
+  const [loadingFamily, setLoadingFamily] = useState(false);
 
   // Easter Egg logic
   const [logoClicks, setLogoClicks] = useState(0);
@@ -61,6 +63,48 @@ export default function DashboardScreen({ navigation }: any) {
     } finally {
       setInviteLoading(false);
     }
+  };
+
+  const handleDeleteLog = (id: string) => {
+    Alert.alert('Delete Log', 'Remove this activity?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try {
+          await deleteLog(id);
+          fetchLogs();
+        } catch (e: any) {
+          Alert.alert('Error', e.response?.data?.error || 'Failed to delete log.');
+        }
+      }},
+    ]);
+  };
+
+  const fetchFamily = async () => {
+    setLoadingFamily(true);
+    try {
+      const { data } = await getFamily();
+      setFamilyData(data);
+    } catch {}
+    setLoadingFamily(false);
+  };
+
+  const handleOpenFamily = () => {
+    fetchFamily();
+    setShowInviteModal(true);
+  };
+
+  const handleRemoveMember = (userId: string, name: string) => {
+    Alert.alert('Remove Member', `Are you sure you want to remove ${name} from the family?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: async () => {
+        try {
+          await removeMember(userId);
+          fetchFamily();
+        } catch (e: any) {
+          Alert.alert('Error', e.response?.data?.error || 'Failed to remove member.');
+        }
+      }},
+    ]);
   };
 
   const birthdayBanner = useMemo(() => {
@@ -146,11 +190,11 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.actionCard, { backgroundColor: theme.colors.card }]}
-            onPress={() => setShowInviteModal(true)}>
+            onPress={handleOpenFamily}>
             <View style={[styles.emojiCircle, { backgroundColor: theme.colors.secondary + '11' }]}>
               <Text style={styles.actionEmoji}>👥</Text>
             </View>
-            <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>Invite</Text>
+            <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>Family</Text>
           </TouchableOpacity>
         </View>
 
@@ -169,7 +213,13 @@ export default function DashboardScreen({ navigation }: any) {
           </View>
         ) : (
           logs.map((item) => (
-            <View key={item.id} style={[styles.logCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            <TouchableOpacity 
+              key={item.id} 
+              onLongPress={() => handleDeleteLog(item.id)}
+              delayLongPress={500}
+              activeOpacity={0.7}
+              style={[styles.logCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+            >
                <View style={[styles.logEmojiCircle, { backgroundColor: theme.colors.primary + '08' }]}>
                  <Text style={styles.logEmoji}>{typeEmoji[item.type] || '📝'}</Text>
                </View>
@@ -181,47 +231,64 @@ export default function DashboardScreen({ navigation }: any) {
                  {item.notes ? <Text style={[styles.logNotes, { color: theme.colors.textSecondary }]}>{item.notes}</Text> : null}
                  <Text style={styles.logMeta}>{item.createdBy} · {item.durationMinutes ? `${item.durationMinutes} min` : 'Just now'}</Text>
                </View>
-            </View>
+            </TouchableOpacity>
           ))
         )}
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Invite Modal */}
+      {/* Family / Invite Modal */}
       <Modal visible={showInviteModal} transparent animationType="fade">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Invite a Family Member 🔗</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Family Management 👥</Text>
             
+            <ScrollView style={{ maxHeight: 300, marginBottom: 20 }}>
+              {loadingFamily ? <ActivityIndicator color={theme.colors.primary} /> : (
+                familyData?.members?.map((m: any) => (
+                  <View key={m.userId} style={styles.memberRow}>
+                    <View style={{ flex: 1 }}>
+                       <Text style={[styles.memberName, { color: theme.colors.text }]}>{m.fullName} {m.userId === selectedChildId ? '(You)' : ''}</Text>
+                       <Text style={styles.memberRole}>{m.role}</Text>
+                    </View>
+                    {m.role !== 'Owner' && (
+                      <TouchableOpacity onPress={() => handleRemoveMember(m.userId, m.fullName)}>
+                         <Text style={styles.removeText}>Remove</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+
+            <View style={styles.separator} />
+
             {generatedCode ? (
               <View style={styles.codeContainer}>
                 <Text style={styles.codeTitle}>Success! Share this code:</Text>
                 <Text style={styles.codeText}>{generatedCode}</Text>
-                <Text style={styles.codeInfo}>Invite expires in 7 days.</Text>
-                <TouchableOpacity style={styles.doneBtn} onPress={() => { setShowInviteModal(false); setGeneratedCode(null); }}>
-                  <Text style={styles.doneBtnText}>Done</Text>
+                <TouchableOpacity style={styles.doneBtn} onPress={() => setGeneratedCode(null)}>
+                  <Text style={styles.doneBtnText}>Generate Another</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
-                <Text style={styles.modalSubtitle}>Enter an email to send an invite, or leave empty to just generate a code.</Text>
+                <Text style={styles.modalSubtitle}>Invite a new member:</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.border }]}
                   placeholder="Email (optional)"
                   placeholderTextColor="#aaa"
                   value={inviteEmail}
                   onChangeText={setInviteEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
                 />
-                <TouchableOpacity style={styles.modalBtn} onPress={handleInvite} disabled={inviteLoading}>
-                  <Text style={styles.modalBtnText}>{inviteLoading ? 'Generating...' : 'Generate Invite'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowInviteModal(false)}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]} onPress={handleInvite} disabled={inviteLoading}>
+                  <Text style={styles.modalBtnText}>{inviteLoading ? 'Generating...' : 'Invite'}</Text>
                 </TouchableOpacity>
               </>
             )}
+            <TouchableOpacity onPress={() => setShowInviteModal(false)}>
+              <Text style={styles.cancelText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -278,6 +345,12 @@ const styles = StyleSheet.create({
   modalBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
   cancelText: { color: '#aaa', textAlign: 'center', marginTop: 20, fontSize: 16, fontWeight: '600' },
   
+  memberRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)' },
+  memberName: { fontSize: 16, fontWeight: '700' },
+  memberRole: { fontSize: 12, color: '#aaa', marginTop: 2 },
+  removeText: { color: '#FF6B6B', fontWeight: '700', fontSize: 13 },
+  separator: { height: 1, backgroundColor: 'rgba(0,0,0,0.1)', marginVertical: 20 },
+
   // Success state
   codeContainer: { alignItems: 'center', paddingVertical: 10 },
   codeTitle: { fontSize: 16, color: '#555', marginBottom: 10, fontWeight: '600' },

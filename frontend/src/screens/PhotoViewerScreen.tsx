@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, FlatList, StatusBar } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, FlatList, StatusBar, Alert } from 'react-native';
 import { Photo } from '../types';
+import { deletePhoto } from '../api/photos';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -10,6 +11,20 @@ export default function PhotoViewerScreen({ route, navigation }: any) {
   const flatListRef = useRef<FlatList>(null);
 
   const currentPhoto = photos[currentIndex];
+
+  const handleDelete = () => {
+    Alert.alert('Delete Photo', 'Remove this memory?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try {
+          await deletePhoto(currentPhoto.id);
+          navigation.goBack(); // Close viewer
+        } catch (e: any) {
+          Alert.alert('Error', e.response?.data?.error || 'Failed to delete photo.');
+        }
+      }},
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -43,13 +58,20 @@ export default function PhotoViewerScreen({ route, navigation }: any) {
 
       {/* Photo info bar */}
       <View style={styles.infoBar}>
-        <Text style={styles.infoDate}>
-          {new Date(currentPhoto.uploadedAt).toLocaleDateString('en-US', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-          })}
-        </Text>
-        <Text style={styles.infoBy}>Uploaded by {currentPhoto.uploadedBy}</Text>
-        {currentPhoto.notes && <Text style={styles.infoNotes}>{currentPhoto.notes}</Text>}
+        <View style={styles.infoRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.infoDate}>
+              {new Date(currentPhoto.uploadedAt).toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+              })}
+            </Text>
+            <Text style={styles.infoBy}>Uploaded by {currentPhoto.uploadedBy}</Text>
+            {currentPhoto.notes && <Text style={styles.infoNotes}>{currentPhoto.notes}</Text>}
+          </View>
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
+            <Text style={styles.deleteEmoji}>🗑️</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.counter}>{currentIndex + 1} / {photos.length}</Text>
       </View>
     </View>
@@ -63,8 +85,11 @@ const styles = StyleSheet.create({
   slide: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT, justifyContent: 'center', alignItems: 'center' },
   image: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT * 0.7 },
   infoBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.7)', padding: 20, paddingBottom: 40 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   infoDate: { color: '#fff', fontSize: 16, fontWeight: '600' },
   infoBy: { color: '#ccc', fontSize: 13, marginTop: 4 },
   infoNotes: { color: '#ddd', fontSize: 13, marginTop: 4, fontStyle: 'italic' },
-  counter: { color: '#888', fontSize: 12, marginTop: 8 },
+  deleteBtn: { padding: 10, marginLeft: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12 },
+  deleteEmoji: { fontSize: 20 },
+  counter: { color: '#888', fontSize: 12, marginTop: 8, textAlign: 'center' },
 });

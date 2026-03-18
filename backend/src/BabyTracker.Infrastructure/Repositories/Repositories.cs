@@ -74,6 +74,16 @@ public class FamilyRepository : IFamilyRepository
             .Where(f => f.Members.Any(m => m.UserId == userId))
             .ToListAsync();
     }
+
+    public async Task RemoveMemberAsync(Guid userId, Guid familyId)
+    {
+        var member = await _db.FamilyMembers.FirstOrDefaultAsync(m => m.UserId == userId && m.FamilyId == familyId);
+        if (member != null)
+        {
+            _db.FamilyMembers.Remove(member);
+            await _db.SaveChangesAsync();
+        }
+    }
 }
 
 public class ChildRepository : IChildRepository

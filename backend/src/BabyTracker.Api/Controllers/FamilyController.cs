@@ -38,7 +38,26 @@ public class FamilyController : BaseApiController
             family.Id,
             family.Name,
             family.InviteCode,
-            Members = family.Members.Select(m => new { m.User.FullName, m.Role, m.JoinedAt })
+            Members = family.Members.Select(m => new { m.UserId, m.User.FullName, m.Role, m.JoinedAt })
         });
+    }
+
+    [HttpDelete("members/{memberUserId:guid}")]
+    public async Task<IActionResult> RemoveMember(Guid memberUserId)
+    {
+        var familyId = GetFamilyId();
+        var currentUserId = GetUserId();
+        
+        var callerMembership = await _families.GetMemberAsync(currentUserId, familyId);
+        if (callerMembership == null) return Unauthorized();
+
+        // Allow removing yourself, or if you are the Owner
+        if (currentUserId != memberUserId && callerMembership.Role != "Owner")
+        {
+            return Forbid();
+        }
+
+        await _families.RemoveMemberAsync(memberUserId, familyId);
+        return NoContent();
     }
 }

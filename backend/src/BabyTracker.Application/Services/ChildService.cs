@@ -38,5 +38,14 @@ public class ChildService
             .DistinctBy(c => c.Id);
     }
 
-    public async Task DeleteChildAsync(Guid childId) => await _children.DeleteAsync(childId);
+    public async Task DeleteChildAsync(Guid childId, Guid userId)
+    {
+        var child = await _children.GetByIdAsync(childId)
+            ?? throw new KeyNotFoundException("Child not found.");
+
+        var membership = await _families.GetMemberAsync(userId, child.FamilyId);
+        if (membership == null) throw new UnauthorizedAccessException();
+
+        await _children.DeleteAsync(childId);
+    }
 }

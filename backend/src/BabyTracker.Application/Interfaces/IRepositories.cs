@@ -17,6 +17,7 @@ public interface IFamilyRepository
     Task<FamilyMember> AddMemberAsync(FamilyMember member);
     Task<FamilyMember> UpdateMemberAsync(FamilyMember member);
     Task<FamilyMember?> GetMemberAsync(Guid userId, Guid familyId);
+    Task RemoveMemberAsync(Guid userId, Guid familyId);
     Task<Guid?> GetFamilyIdForUserAsync(Guid userId);
     Task<IEnumerable<Family>> GetFamiliesForUserAsync(Guid userId);
 }

@@ -45,11 +45,11 @@ export interface PagedResult<T> {
   pageSize: number;
 }
 
-export interface FamilyInfo {
+export interface Family {
   id: string;
   name: string;
   inviteCode: string;
-  members: { fullName: string; role: string; joinedAt: string }[];
+  members: { userId: string; fullName: string; role: string; joinedAt: string }[];
   children: Child[];
 }
 

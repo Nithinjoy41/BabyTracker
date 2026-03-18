@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { validateEmail, validatePassword } from '../utils/validation';
 
 export default function LoginScreen({ navigation }: any) {
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) return Alert.alert('Error', 'Please fill in all fields.');
+    const eError = validateEmail(email);
+    const pError = validatePassword(password);
+    
+    setEmailError(eError);
+    setPasswordError(pError);
+    
+    if (eError || pError) return;
+
     setLoading(true);
     try {
       await signIn(email, password);
     } catch (e: any) {
-      Alert.alert('Login Failed', e.response?.data?.error || 'Something went wrong.');
+      Alert.alert('Login Failed', e.response?.data?.error || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -26,10 +36,13 @@ export default function LoginScreen({ navigation }: any) {
         <Text style={styles.title}>🍼 BabyTracker</Text>
         <Text style={styles.subtitle}>Welcome back</Text>
 
-        <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail}
+        <TextInput style={[styles.input, emailError ? styles.inputError : null]} placeholder="Email" value={email} onChangeText={(t) => { setEmail(t); setEmailError(null); }}
           autoCapitalize="none" keyboardType="email-address" placeholderTextColor="#999" />
-        <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword}
+        {emailError && <Text style={styles.errorText}>{emailError}</Text>}
+        
+        <TextInput style={[styles.input, passwordError ? styles.inputError : null]} placeholder="Password" value={password} onChangeText={(t) => { setPassword(t); setPasswordError(null); }}
           secureTextEntry placeholderTextColor="#999" />
+        {passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
 
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
           <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
@@ -49,6 +62,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: '800', color: '#6C63FF', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#888', textAlign: 'center', marginBottom: 24 },
   input: { backgroundColor: '#F5F5FF', borderRadius: 12, padding: 14, fontSize: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E0DFFF' },
+  inputError: { borderColor: '#FF6B6B' },
+  errorText: { color: '#FF6B6B', fontSize: 12, marginTop: -8, marginBottom: 8, marginLeft: 4, fontWeight: '600' },
   button: { backgroundColor: '#6C63FF', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   link: { marginTop: 16, alignItems: 'center' },

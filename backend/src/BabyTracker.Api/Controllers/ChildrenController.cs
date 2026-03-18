@@ -32,7 +32,7 @@ public class ChildrenController : BaseApiController
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteChild(Guid id)
     {
-        await _children.DeleteChildAsync(id);
+        await _children.DeleteChildAsync(id, GetUserId());
         return NoContent();
     }
 }

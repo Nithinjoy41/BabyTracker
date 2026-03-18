@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { addChild } from '../api/children';
+import { addChild, deleteChild } from '../api/children';
 import { joinFamily } from '../api/auth';
 import { Child } from '../types';
 
@@ -90,6 +90,39 @@ export default function ChildPickerScreen({ navigation }: any) {
     }
   };
 
+  const handleDeleteChild = (child: Child) => {
+    Alert.alert(
+      'Delete Profile?',
+      `Are you sure you want to delete ${child.name}? This will remove all their logs, photos, and records forever.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: () => {
+            // Second confirmation: Type name
+            Alert.prompt(
+              'Final Confirmation',
+              `Type "${child.name}" to permanently delete:`,
+              async (text) => {
+                if (text === child.name) {
+                  try {
+                    await deleteChild(child.id);
+                    refreshChildren(); // Reload list
+                  } catch (e: any) {
+                    Alert.alert('Error', e.response?.data?.error || 'Failed to delete.');
+                  }
+                } else {
+                  Alert.alert('Error', 'Name did not match. Deletion cancelled.');
+                }
+              }
+            );
+          }
+        },
+      ]
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Immersive Header */}
@@ -114,6 +147,8 @@ export default function ChildPickerScreen({ navigation }: any) {
               <TouchableOpacity 
                 style={[styles.childCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]} 
                 onPress={() => handleSelectChild(item.id)}
+                onLongPress={() => handleDeleteChild(item)}
+                delayLongPress={800}
               >
                 <View style={[styles.emojiCircle, { backgroundColor: theme.colors.primary + '11' }]}>
                   <Text style={styles.childEmoji}>👶</Text>

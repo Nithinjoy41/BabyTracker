@@ -56,14 +56,17 @@ export default function VaccinesScreen() {
         keyExtractor={(item) => item.id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6C63FF']} />}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onLongPress={() => handleDelete(item.id)}>
+          <View style={styles.card}>
             <Text style={styles.emoji}>💉</Text>
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.name}</Text>
               {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
               <Text style={styles.meta}>{item.createdBy} · {new Date(item.date).toLocaleDateString()}</Text>
             </View>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteBtn}>
+              <Text style={styles.deleteEmoji}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
         )}
         ListEmptyComponent={<Text style={styles.empty}>No vaccines recorded.</Text>}
       />
@@ -97,6 +100,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '600', color: '#333' },
   notes: { fontSize: 13, color: '#888', marginTop: 2 },
   meta: { fontSize: 11, color: '#aaa', marginTop: 4 },
+  deleteBtn: { padding: 8, marginLeft: 8 },
+  deleteEmoji: { fontSize: 20, opacity: 0.6 },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40, fontSize: 15 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
   modalCard: { backgroundColor: '#fff', borderRadius: 16, padding: 24 },
