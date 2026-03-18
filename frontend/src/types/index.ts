@@ -52,3 +52,19 @@ export interface FamilyInfo {
   members: { fullName: string; role: string; joinedAt: string }[];
   children: Child[];
 }
+
+export interface BirthdayGuest {
+  id: string;
+  name: string;
+  isConfirmed: boolean;
+}
+
+export interface BirthdayPlan {
+  id: string;
+  childId: string;
+  theme: string;
+  location: string;
+  notes: string;
+  date: string | null;
+  guests: BirthdayGuest[];
+}

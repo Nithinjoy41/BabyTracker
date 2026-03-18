@@ -68,16 +68,36 @@ export default function DashboardScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* Quick-action buttons */}
-      <View style={styles.actions}>
-        {['Food', 'Nappy', 'Sleep'].map((type) => (
-          <TouchableOpacity key={type} style={styles.actionBtn}
-            onPress={() => navigation.navigate('AddLog', { type })}>
-            <Text style={styles.actionEmoji}>{typeEmoji[type]}</Text>
-            <Text style={styles.actionLabel}>{type}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Birthday Banner */}
+      {(() => {
+        if (!selectedChild?.dateOfBirth) return null;
+        const dob = new Date(selectedChild.dateOfBirth);
+        const today = new Date();
+        const nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+        if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+        
+        const diffTime = nextBirthday.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 30) {
+          return (
+            <TouchableOpacity 
+              style={styles.birthdayBanner}
+              onPress={() => navigation.navigate('BirthdayPlanner', { childId: selectedChildId })}
+            >
+              <Text style={styles.birthdayEmoji}>🎂</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.birthdayTitle}>
+                  {diffDays === 0 ? "It's Party Day! 🎈" : `${selectedChild.name}'s birthday is in ${diffDays} day${diffDays > 1 ? 's' : ''}!`}
+                </Text>
+                <Text style={styles.birthdaySub}>Tap to plan the perfect celebration ✨</Text>
+              </View>
+              <Text style={styles.birthdayArrow}>→</Text>
+            </TouchableOpacity>
+          );
+        }
+        return null;
+      })()}
 
       <Text style={styles.sectionTitle}>Recent Activity</Text>
 
@@ -184,4 +204,21 @@ const styles = StyleSheet.create({
   codeInfo: { fontSize: 13, color: '#aaa', marginBottom: 24 },
   doneBtn: { backgroundColor: '#4ECDC4', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 40 },
   doneBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  birthdayBanner: {
+    backgroundColor: '#FF6B6B',
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    elevation: 4,
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  birthdayEmoji: { fontSize: 32, marginRight: 16 },
+  birthdayTitle: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  birthdaySub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
+  birthdayArrow: { color: '#fff', fontSize: 20, fontWeight: '700', marginLeft: 8 },
 });

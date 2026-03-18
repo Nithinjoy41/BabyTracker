@@ -14,6 +14,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 import VaccinesScreen from '../screens/VaccinesScreen';
 import PhotosScreen from '../screens/PhotosScreen';
 import PhotoViewerScreen from '../screens/PhotoViewerScreen';
+import BirthdayPlannerScreen from '../screens/BirthdayPlannerScreen';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -83,6 +84,11 @@ export default function AppNavigator() {
             name="PhotoViewer"
             component={PhotoViewerScreen}
             options={{ headerShown: false, presentation: 'fullScreenModal' }}
+          />
+          <RootStack.Screen
+            name="BirthdayPlanner"
+            component={BirthdayPlannerScreen}
+            options={{ headerShown: true, title: 'Birthday Planner', headerStyle: { backgroundColor: '#FF6B6B' }, headerTintColor: '#fff' }}
           />
         </>
       )}
