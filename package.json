@@ -1,0 +1,11 @@
+{
+  "name": "babytracker-root",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "build:apk": "eas build --profile apk --platform android --non-interactive"
+  }
+}

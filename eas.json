@@ -1,4 +1,7 @@
 {
+  "cli": {
+    "appDir": "frontend"
+  },
   "build": {
     "development": {
       "developmentClient": true,
