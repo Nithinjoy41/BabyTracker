@@ -317,6 +317,11 @@ export default function BirthdayPlannerScreen({ route }: any) {
           <View style={styles.tipContainer}>
             <Text style={styles.tipText}>💡 Tip: Order the cake 2 weeks in advance!</Text>
           </View>
+          {stats.confirmed > 0 && (
+            <View style={[styles.readyBadge, { backgroundColor: '#4CAF50' }]}>
+              <Text style={styles.readyText}>READY TO PARTY! 🥳</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.contentWrapper}>
@@ -508,6 +513,8 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.2)' },
   tipContainer: { marginTop: 24, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)' },
   tipText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
+  readyBadge: { marginTop: 16, paddingHorizontal: 24, paddingVertical: 8, borderRadius: 20, elevation: 5 },
+  readyText: { color: '#FFF', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
   contentWrapper: { padding: 20 },
   card: { padding: 24, borderRadius: 32, marginBottom: 20, elevation: 2 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
