@@ -141,54 +141,16 @@ export default function BirthdayPlannerScreen({ route }: any) {
   }
 
   const renderGuestItem = (guest: BirthdayGuest) => (
-    <View key={guest.id} style={[styles.guestItem, { borderBottomColor: theme.colors.border }]}>
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.guestName, { color: theme.colors.text }, guest.status === 'Confirmed' && styles.confirmedText]}>
-          {guest.name}
-        </Text>
-        
-        <View style={styles.subGuestRow}>
-          <Text style={styles.subGuestLabel}>Adults:</Text>
-          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalAdults: Math.max(0, guest.additionalAdults - 1) })}>
-            <Text style={styles.counterBtn}>-</Text>
-          </TouchableOpacity>
-          <Text style={[styles.counterText, { color: theme.colors.text }]}>{1 + guest.additionalAdults}</Text>
-          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalAdults: guest.additionalAdults + 1 })}>
-            <Text style={styles.counterBtn}>+</Text>
-          </TouchableOpacity>
-
-          <Text style={[styles.subGuestLabel, { marginLeft: 10 }]}>Children:</Text>
-          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalChildren: Math.max(0, guest.additionalChildren - 1) })}>
-            <Text style={styles.counterBtn}>-</Text>
-          </TouchableOpacity>
-          <Text style={[styles.counterText, { color: theme.colors.text }]}>{guest.additionalChildren}</Text>
-          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalChildren: guest.additionalChildren + 1 })}>
-            <Text style={styles.counterBtn}>+</Text>
-          </TouchableOpacity>
+    <View key={guest.id} style={[styles.guestCardItem, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+      <View style={styles.guestHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.guestName, { color: theme.colors.text }, guest.status === 'Confirmed' && styles.confirmedText]}>
+            {guest.name}
+          </Text>
+          <View style={styles.statusBadge}>
+             <Text style={styles.statusEmoji}>{guest.status === 'Confirmed' ? '✅ Confirmed' : guest.status === 'Maybe' ? '❓ Maybe' : '⏳ Pending'}</Text>
+          </View>
         </View>
-
-        <TextInput
-          style={styles.subNamesInput}
-          placeholder="Other names (comma separated)"
-          placeholderTextColor="#aaa"
-          defaultValue={guest.additionalNames}
-          onEndEditing={(e) => handleUpdateGuest(guest.id, { additionalNames: e.nativeEvent.text })}
-        />
-      </View>
-      
-      <View style={styles.statusButtons}>
-        {['Confirmed', 'Maybe', 'Pending'].map((status) => (
-          <TouchableOpacity 
-            key={status}
-            onPress={() => handleUpdateGuest(guest.id, { status: status as any })}
-            style={[
-              styles.statusBtn, 
-              guest.status === status && { backgroundColor: theme.colors.primary + '33', borderColor: theme.colors.primary }
-            ]}
-          >
-            <Text style={styles.statusEmoji}>{status === 'Confirmed' ? '✅' : status === 'Maybe' ? '❓' : '⏳'}</Text>
-          </TouchableOpacity>
-        ))}
         <TouchableOpacity 
           onPress={() => {
             Alert.alert('Remove Guest', 'Are you sure?', [
@@ -196,122 +158,178 @@ export default function BirthdayPlannerScreen({ route }: any) {
               { text: 'Remove', style: 'destructive', onPress: () => handleDeleteGuest(guest.id) }
             ]);
           }} 
-          style={styles.deleteBtn}
+          style={styles.smallDeleteBtn}
         >
           <Text style={styles.deleteIcon}>🗑️</Text>
         </TouchableOpacity>
+      </View>
+      
+      <View style={styles.guestActions}>
+        <View style={styles.counterGroup}>
+          <Text style={[styles.subGuestLabel, { color: theme.colors.textSecondary }]}>Adults</Text>
+          <View style={styles.counterRow}>
+            <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalAdults: Math.max(0, guest.additionalAdults - 1) })} style={styles.circleBtn}>
+              <Text style={styles.counterBtn}>-</Text>
+            </TouchableOpacity>
+            <Text style={[styles.counterText, { color: theme.colors.text }]}>{1 + guest.additionalAdults}</Text>
+            <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalAdults: guest.additionalAdults + 1 })} style={styles.circleBtn}>
+              <Text style={styles.counterBtn}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.counterGroup}>
+          <Text style={[styles.subGuestLabel, { color: theme.colors.textSecondary }]}>Children</Text>
+          <View style={styles.counterRow}>
+            <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalChildren: Math.max(0, guest.additionalChildren - 1) })} style={styles.circleBtn}>
+              <Text style={styles.counterBtn}>-</Text>
+            </TouchableOpacity>
+            <Text style={[styles.counterText, { color: theme.colors.text }]}>{guest.additionalChildren}</Text>
+            <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalChildren: guest.additionalChildren + 1 })} style={styles.circleBtn}>
+              <Text style={styles.counterBtn}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {(guest.additionalAdults > 0 || guest.additionalChildren > 0 || guest.additionalNames) && (
+        <TextInput
+          style={[styles.subNamesInput, { backgroundColor: theme.colors.background + '55', color: theme.colors.text }]}
+          placeholder="Enter names for extra guests..."
+          placeholderTextColor="#aaa"
+          defaultValue={guest.additionalNames}
+          onEndEditing={(e) => handleUpdateGuest(guest.id, { additionalNames: e.nativeEvent.text })}
+        />
+      )}
+
+      <View style={styles.statusPicker}>
+        {['Confirmed', 'Maybe', 'Pending'].map((status) => (
+          <TouchableOpacity 
+            key={status}
+            onPress={() => handleUpdateGuest(guest.id, { status: status as any })}
+            style={[
+              styles.statusOption, 
+              { borderColor: theme.colors.border },
+              guest.status === status && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
+            ]}
+          >
+            <Text style={[styles.statusOptionText, guest.status === status && { color: '#FFF' }]}>{status}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        {/* ── Immersive Planning Summary ✨ ── */}
-        <View style={[styles.statsCard, { backgroundColor: theme.colors.primary + '22', borderBottomColor: theme.colors.primary }]}>
-          <View style={styles.statsHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Planning Summary ✨</Text>
-          </View>
-          
-          <View style={styles.statsGrid}>
-            <StatBox value={stats.confirmed} label="Confirmed" sub={`(${stats.adults}A, ${stats.children}C)`} theme={theme} />
-            <StatBox value={stats.maybe} label="Maybe" theme={theme} />
-            <StatBox value={stats.chairs} label="Chairs" theme={theme} />
-            <StatBox value={stats.food} label="Food Plates" color={theme.colors.secondary} theme={theme} />
-          </View>
-
-          <View style={styles.tipBox}>
-            <Text style={styles.tipText}>💡 Suggestion: Aim for {stats.food} plates to cover everyone including buffers.</Text>
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* Statistics - High Level */}
+        <View style={[styles.immersiveStats, { backgroundColor: theme.colors.primary }]}>
+          <Text style={styles.heroTitle}>Planning for {child?.name}</Text>
+          <View style={styles.mainStatsRow}>
+            <View style={styles.mainStat}>
+              <Text style={styles.mainStatValue}>{stats.confirmed}</Text>
+              <Text style={styles.mainStatLabel}>Confirmed</Text>
+            </View>
+            <StatDivider />
+            <View style={styles.mainStat}>
+              <Text style={styles.mainStatValue}>{stats.chairs}</Text>
+              <Text style={styles.mainStatLabel}>Chairs</Text>
+            </View>
+            <StatDivider />
+            <View style={styles.mainStat}>
+              <Text style={styles.mainStatValue}>{stats.food}</Text>
+              <Text style={styles.mainStatLabel}>Plates</Text>
+            </View>
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-          <View style={styles.row}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Party for {child?.name} 🥳</Text>
-            <TouchableOpacity 
-              style={[styles.saveBtn, { backgroundColor: theme.colors.secondary }, saving && styles.saveBtnDisabled]} 
-              onPress={() => handleUpdatePlan({ date: dateText })}
-              disabled={saving}
-            >
-              <Text style={styles.saveBtnText}>{saving ? '...' : 'Save'}</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Theme 🎨</Text>
-            <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-              value={plan?.theme}
-              onChangeText={(text) => setPlan(p => p ? { ...p, theme: text } : null)}
-              onBlur={() => plan && handleUpdatePlan({ theme: plan.theme })}
-              placeholder="e.g. Space Adventure"
-            />
-          </View>
+        <View style={styles.contentWrapper}>
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <View style={styles.cardHeader}>
+               <Text style={[styles.cardTitle, { color: theme.colors.text }]}>General Details 🎈</Text>
+               <TouchableOpacity 
+                style={[styles.saveBtn, { backgroundColor: theme.colors.secondary }]} 
+                onPress={() => handleUpdatePlan({ date: dateText })}
+                disabled={saving}
+              >
+                <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Update Plan'}</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>PARTY THEME</Text>
+              <TextInput
+                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                value={plan?.theme}
+                onChangeText={(text) => setPlan(p => p ? { ...p, theme: text } : null)}
+                onBlur={() => plan && handleUpdatePlan({ theme: plan.theme })}
+                placeholder="e.g. Under the Sea"
+              />
+            </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Location 📍</Text>
-            <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-              value={plan?.location}
-              onChangeText={(text) => setPlan(p => p ? { ...p, location: text } : null)}
-              onBlur={() => plan && handleUpdatePlan({ location: plan.location })}
-              placeholder="e.g. Local Park"
-            />
-          </View>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>LOCATION</Text>
+              <TextInput
+                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                value={plan?.location}
+                onChangeText={(text) => setPlan(p => p ? { ...p, location: text } : null)}
+                onBlur={() => plan && handleUpdatePlan({ location: plan.location })}
+                placeholder="e.g. Home or Venue Name"
+              />
+            </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Date 📅</Text>
-            <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-              value={dateText}
-              onChangeText={setDateText}
-              placeholder="YYYY-MM-DD"
-            />
-          </View>
+            <View style={styles.inputRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>DATE</Text>
+                <TextInput
+                  style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                  value={dateText}
+                  onChangeText={setDateText}
+                  placeholder="YYYY-MM-DD"
+                />
+              </View>
+            </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Notes 📝</Text>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>NOTES</Text>
             <TextInput
               style={[styles.input, styles.textArea, { color: theme.colors.text, borderColor: theme.colors.border }]}
               multiline
               value={plan?.notes}
               onChangeText={(text) => setPlan(p => p ? { ...p, notes: text } : null)}
               onBlur={() => plan && handleUpdatePlan({ notes: plan.notes })}
-              placeholder="Cake details, ideas..."
+              placeholder="Menu, entertainment, or special requests..."
             />
           </View>
-        </View>
 
-        <View style={[styles.card, styles.guestCard, { backgroundColor: theme.colors.card, borderLeftColor: theme.colors.primary }]}>
-          <Text style={[styles.title, { color: theme.colors.text, marginBottom: 16 }]}>Guest List 👥</Text>
-          
-          <View style={styles.addGuestRow}>
-            <TextInput
-              style={[styles.input, { flex: 1, marginBottom: 0, color: theme.colors.text, borderColor: theme.colors.border }]}
-              value={newGuest}
-              onChangeText={setNewGuest}
-              placeholder="Add name..."
-              placeholderTextColor="#aaa"
-            />
-            <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAddGuest}>
-              <Text style={styles.addBtnText}>Add</Text>
-            </TouchableOpacity>
-          </View>
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.cardTitle, { color: theme.colors.text, marginBottom: 20 }]}>Guest List 👥</Text>
+            
+            <View style={styles.addGuestRow}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginBottom: 0, color: theme.colors.text, borderColor: theme.colors.border }]}
+                value={newGuest}
+                onChangeText={setNewGuest}
+                placeholder="Enter guest name..."
+                placeholderTextColor="#aaa"
+              />
+              <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAddGuest}>
+                <Text style={styles.addBtnText}>Invite</Text>
+              </TouchableOpacity>
+            </View>
 
-          {['Confirmed', 'Maybe', 'Pending'].map(status => {
-            const list = plan?.guests.filter(g => g.status === status) || [];
-            if (list.length === 0) return null;
-            return (
-              <View key={status}>
-                <View style={[styles.sectionHeader, { borderBottomColor: theme.colors.primary + '44' }]}>
-                  <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>{status} ({list.length})</Text>
+            {['Confirmed', 'Maybe', 'Pending'].map(status => {
+              const list = plan?.guests.filter(g => g.status === status) || [];
+              if (list.length === 0) return null;
+              return (
+                <View key={status} style={styles.listSection}>
+                  <Text style={[styles.listHeader, { color: theme.colors.primary }]}>{status.toUpperCase()} – {list.length}</Text>
+                  {list.map(renderGuestItem)}
                 </View>
-                {list.map(renderGuestItem)}
-              </View>
-            );
-          })}
+              );
+            })}
+          </View>
         </View>
-        <View style={{ height: 100 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -327,50 +345,55 @@ function StatBox({ value, label, sub, color, theme }: any) {
   );
 }
 
+const StatDivider = () => <View style={styles.statDivider} />;
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  card: { padding: 20, borderRadius: 24, marginBottom: 20, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12 },
-  statsCard: { padding: 20, borderRadius: 28, marginBottom: 20, elevation: 8 },
-  statsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  title: { fontSize: 22, fontWeight: '800' },
-  subtitle: { fontSize: 13, opacity: 0.6, marginTop: 4, marginBottom: 20 },
-  inputGroup: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { borderWidth: 1.5, borderRadius: 16, padding: 14, fontSize: 16, marginBottom: 20 },
+  immersiveStats: { padding: 40, paddingTop: 60, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, elevation: 10, alignItems: 'center' },
+  heroTitle: { color: '#FFF', fontSize: 24, fontWeight: '900', marginBottom: 24, textAlign: 'center' },
+  mainStatsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+  mainStat: { alignItems: 'center', paddingHorizontal: 15 },
+  mainStatValue: { color: '#FFF', fontSize: 32, fontWeight: '900' },
+  mainStatLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '700', marginTop: 4 },
+  statDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.2)' },
+  contentWrapper: { padding: 20 },
+  card: { padding: 24, borderRadius: 32, marginBottom: 20, elevation: 2 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  cardTitle: { fontSize: 20, fontWeight: '900' },
+  label: { fontSize: 11, fontWeight: '800', marginBottom: 8, letterSpacing: 1 },
+  inputGroup: { marginBottom: 20 },
+  input: { borderWidth: 1.5, borderRadius: 20, padding: 16, fontSize: 16 },
   textArea: { height: 100, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  badge: { backgroundColor: '#FFEBEB', color: '#FF6B6B', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, fontSize: 12, fontWeight: '700' },
-  saveBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 14 },
-  saveBtnDisabled: { opacity: 0.5 },
-  saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  addGuestRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  addBtn: { borderRadius: 14, paddingHorizontal: 24, justifyContent: 'center' },
-  addBtnText: { color: '#fff', fontWeight: '800' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  inputRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  saveBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 15 },
+  saveBtnText: { color: '#FFF', fontWeight: '800', fontSize: 13 },
+  addGuestRow: { flexDirection: 'row', gap: 12, marginBottom: 30 },
+  addBtn: { borderRadius: 18, paddingHorizontal: 24, justifyContent: 'center' },
+  addBtnText: { color: '#FFF', fontWeight: '900' },
+  listSection: { marginTop: 10 },
+  listHeader: { fontSize: 12, fontWeight: '900', marginBottom: 15, letterSpacing: 1 },
+  guestCardItem: { borderRadius: 24, padding: 16, marginBottom: 16, borderWidth: 1 },
+  guestHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
+  guestName: { fontSize: 18, fontWeight: '800' },
+  statusBadge: { marginTop: 4 },
+  statusEmoji: { fontSize: 11, fontWeight: '700', color: '#888' },
+  smallDeleteBtn: { padding: 8 },
+  deleteIcon: { fontSize: 18 },
+  guestActions: { flexDirection: 'row', gap: 20, marginBottom: 16 },
+  counterGroup: { flex: 1 },
+  subGuestLabel: { fontSize: 10, fontWeight: '900', marginBottom: 8 },
+  counterRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  circleBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.05)', justifyContent: 'center', alignItems: 'center' },
+  counterBtn: { fontSize: 20, fontWeight: '700', color: '#6C63FF' },
+  counterText: { fontSize: 16, fontWeight: '900', minWidth: 20, textAlign: 'center' },
+  subNamesInput: { borderRadius: 15, padding: 12, fontSize: 13, marginBottom: 16, fontStyle: 'italic' },
+  statusPicker: { flexDirection: 'row', gap: 8 },
+  statusOption: { flex: 1, paddingVertical: 10, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+  statusOptionText: { fontSize: 11, fontWeight: '800', color: '#888' },
+  confirmedText: { color: '#4CAF50' },
   statItem: { flex: 1, minWidth: '45%', borderRadius: 18, padding: 16, alignItems: 'center', elevation: 2 },
   statValue: { fontSize: 28, fontWeight: '900' },
   statLabel: { fontSize: 11, fontWeight: '700', color: '#888', marginTop: 4 },
   statSub: { fontSize: 9, color: '#aaa' },
-  tipBox: { backgroundColor: 'rgba(255,255,255,0.4)', padding: 14, borderRadius: 16, marginTop: 16 },
-  tipText: { fontSize: 12, color: '#444', fontStyle: 'italic', fontWeight: '500' },
-  guestCard: { borderLeftWidth: 8 },
-  sectionHeader: { marginTop: 20, marginBottom: 12, paddingBottom: 6, borderBottomWidth: 2 },
-  sectionTitle: { fontSize: 15, fontWeight: '800', textTransform: 'uppercase' },
-  guestItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
-  subGuestRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6, opacity: 0.8 },
-  subGuestLabel: { fontSize: 10, fontWeight: '700', color: '#888', marginRight: 4 },
-  counterBtn: { fontSize: 22, color: '#6C63FF', fontWeight: '700', paddingHorizontal: 12 },
-  counterText: { fontSize: 15, fontWeight: '800', minWidth: 25, textAlign: 'center' },
-  subNamesInput: { fontSize: 12, color: '#888', marginTop: 8, fontStyle: 'italic', paddingVertical: 4 },
-  guestName: { fontSize: 17, fontWeight: '700' },
-  confirmedText: { color: '#4CAF50' },
-  statusButtons: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  statusBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.03)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'transparent' },
-  statusEmoji: { fontSize: 16 },
-  deleteBtn: { padding: 6, marginLeft: 4 },
-  deleteIcon: { fontSize: 18 },
-  emptyText: { textAlign: 'center', color: '#aaa', marginTop: 30, fontStyle: 'italic' },
-  savingTag: { fontSize: 12, color: '#FF6B6B', fontStyle: 'italic', marginTop: 10, textAlign: 'right' },
-  miniSaving: { fontSize: 10, color: '#FF6B6B', fontStyle: 'italic' },
 });
