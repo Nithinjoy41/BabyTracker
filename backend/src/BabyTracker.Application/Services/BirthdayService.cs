@@ -55,7 +55,7 @@ public class BirthdayService
             AdditionalChildren = 0
         };
         await _birthdays.AddGuestAsync(guest);
-        return new BirthdayGuestDto(guest.Id, guest.Name, guest.Status, guest.AdditionalAdults, guest.AdditionalChildren);
+        return new BirthdayGuestDto(guest.Id, guest.Name, guest.Status, guest.AdditionalAdults, guest.AdditionalChildren, guest.SubGuestsJson);
     }
 
     public async Task UpdateGuestAsync(Guid guestId, UpdateGuestDto dto)
@@ -66,6 +66,7 @@ public class BirthdayService
         guest.Status = dto.Status;
         guest.AdditionalAdults = dto.AdditionalAdults;
         guest.AdditionalChildren = dto.AdditionalChildren;
+        guest.SubGuestsJson = dto.SubGuests;
         await _birthdays.UpdateGuestAsync(guest);
     }
     
@@ -73,5 +74,5 @@ public class BirthdayService
 
     private BirthdayPlanDto MapToDto(BirthdayPlan p) =>
         new BirthdayPlanDto(p.Id, p.ChildId, p.Theme, p.Location, p.Notes, p.Date,
-            p.Guests.Select(g => new BirthdayGuestDto(g.Id, g.Name, g.Status, g.AdditionalAdults, g.AdditionalChildren)));
+            p.Guests.Select(g => new BirthdayGuestDto(g.Id, g.Name, g.Status, g.AdditionalAdults, g.AdditionalChildren, g.SubGuestsJson)));
 }

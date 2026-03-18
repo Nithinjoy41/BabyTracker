@@ -157,7 +157,7 @@ using (var scope = app.Services.CreateScope())
         // Try to query the new FamilyInvites table and BirthdayGuest properties.
         // If it fails (e.g. table doesn't exist or column missing), we know the schema is old.
         _ = db.FamilyInvites.OrderBy(i => i.Id).Take(1).ToList();
-        _ = db.BirthdayGuests.Select(g => new { g.Status, g.AdditionalAdults }).Take(1).ToList();
+        _ = db.BirthdayGuests.Select(g => new { g.Status, g.SubGuestsJson }).Take(1).ToList();
     }
     catch
     {
