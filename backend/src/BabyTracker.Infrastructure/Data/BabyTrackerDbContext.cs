@@ -148,5 +148,25 @@ public class BabyTrackerDbContext : DbContext
              .HasForeignKey(p => p.UserId)
              .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // ── BirthdayPlan ──────────────────────────────────────
+        modelBuilder.Entity<BirthdayPlan>(e =>
+        {
+            e.HasKey(p => p.Id);
+            e.HasOne(p => p.Child)
+             .WithMany() // A child might have multiple birthdays over years
+             .HasForeignKey(p => p.ChildId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── BirthdayGuest ─────────────────────────────────────
+        modelBuilder.Entity<BirthdayGuest>(e =>
+        {
+            e.HasKey(g => g.Id);
+            e.HasOne(g => g.BirthdayPlan)
+             .WithMany(p => p.Guests)
+             .HasForeignKey(g => g.BirthdayPlanId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

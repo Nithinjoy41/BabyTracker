@@ -154,9 +154,10 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<BabyTrackerDbContext>();
     try
     {
-        // Try to query the new FamilyInvites table.
-        // If it fails (e.g. table doesn't exist), we know the schema is old.
+        // Try to query the new FamilyInvites table and BirthdayGuest.Status.
+        // If it fails (e.g. table doesn't exist or column missing), we know the schema is old.
         _ = db.FamilyInvites.OrderBy(i => i.Id).Take(1).ToList();
+        _ = db.BirthdayGuests.Select(g => g.Status).Take(1).ToList();
     }
     catch
     {

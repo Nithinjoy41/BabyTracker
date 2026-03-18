@@ -141,7 +141,16 @@ export default function BirthdayPlannerScreen({ route }: any) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Party for {child?.name} 🥳</Text>
+        <View style={styles.row}>
+          <Text style={styles.title}>Party for {child?.name} 🥳</Text>
+          <TouchableOpacity 
+            style={[styles.saveBtn, saving && styles.saveBtnDisabled]} 
+            onPress={() => plan && handleUpdatePlan({})}
+            disabled={saving}
+          >
+            <Text style={styles.saveBtnText}>{saving ? '...' : 'Save'}</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.subtitle}>Let's make it a day to remember!</Text>
 
         <View style={styles.inputGroup}>
@@ -258,6 +267,9 @@ const styles = StyleSheet.create({
   guestCard: { borderLeftWidth: 6, borderLeftColor: '#FF6B6B' },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   badge: { backgroundColor: '#FFEBEB', color: '#FF6B6B', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, fontSize: 12, fontWeight: '700' },
+  saveBtn: { backgroundColor: '#4ECDC4', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
+  saveBtnDisabled: { opacity: 0.5 },
+  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   addGuestRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   addBtn: { backgroundColor: '#FF6B6B', borderRadius: 12, paddingHorizontal: 20, justifyContent: 'center' },
   addBtnText: { color: '#fff', fontWeight: '700' },
