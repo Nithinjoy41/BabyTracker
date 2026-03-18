@@ -68,6 +68,17 @@ export default function DashboardScreen({ navigation }: any) {
         </View>
       </View>
 
+      {/* Quick-action buttons */}
+      <View style={styles.actions}>
+        {['Food', 'Nappy', 'Sleep'].map((type) => (
+          <TouchableOpacity key={type} style={styles.actionBtn}
+            onPress={() => navigation.navigate('AddLog', { type })}>
+            <Text style={styles.actionEmoji}>{typeEmoji[type]}</Text>
+            <Text style={styles.actionLabel}>{type}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Birthday Banner */}
       {(() => {
         if (!selectedChild?.dateOfBirth) return null;
