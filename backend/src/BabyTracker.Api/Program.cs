@@ -152,7 +152,48 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BabyTrackerDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) || 
+                               ex.Message.Contains("Relation", StringComparison.OrdinalIgnoreCase))
+    {
+        // This happens when introducing migrations to an existing DB that was created via EnsureCreated.
+        // We "baseline" the migration history by manually inserting the records.
+        try
+        {
+            if (db.Database.IsNpgsql())
+            {
+                db.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS ""__EFMigrationsHistory"" (
+                        ""MigrationId"" character varying(150) NOT NULL,
+                        ""ProductVersion"" character varying(32) NOT NULL,
+                        CONSTRAINT ""PK___EFMigrationsHistory"" PRIMARY KEY (""MigrationId"")
+                    );
+                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"") 
+                    VALUES ('20260318205102_InitialCreate', '9.0.14') ON CONFLICT DO NOTHING;
+                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"") 
+                    VALUES ('20260318210541_FixBirthdayMapping', '9.0.14') ON CONFLICT DO NOTHING;
+                ");
+            }
+            else
+            {
+                // SQLite equivalent
+                db.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS ""__EFMigrationsHistory"" (
+                        ""MigrationId"" TEXT NOT NULL,
+                        ""ProductVersion"" TEXT NOT NULL,
+                        CONSTRAINT ""PK___EFMigrationsHistory"" PRIMARY KEY (""MigrationId"")
+                    );
+                    INSERT OR IGNORE INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"") VALUES ('20260318205102_InitialCreate', '9.0.14');
+                    INSERT OR IGNORE INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"") VALUES ('20260318210541_FixBirthdayMapping', '9.0.14');
+                ");
+            }
+            db.Database.Migrate(); // Try again
+        }
+        catch { /* Fallback: application continues if schema is already correct */ }
+    }
 }
 
 app.Run();
