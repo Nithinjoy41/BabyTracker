@@ -32,23 +32,39 @@ export default function BirthdayPlannerScreen({ route }: any) {
   useEffect(() => { fetchPlan(); }, [childId]);
 
   const handleUpdatePlan = async (updates: Partial<BirthdayPlan>) => {
-    if (!childId) return;
+    if (!childId || !plan) return;
+    
+    // Merge updates with current plan to send a full DTO
+    const updatedPlan = {
+      theme: updates.theme !== undefined ? updates.theme : plan.theme,
+      location: updates.location !== undefined ? updates.location : plan.location,
+      notes: updates.notes !== undefined ? updates.notes : plan.notes,
+      date: updates.date !== undefined ? updates.date : plan.date,
+    };
+
+    setSaving(true);
     try {
-      const { data } = await updateBirthdayPlan(childId, updates);
+      const { data } = await updateBirthdayPlan(childId, updatedPlan);
       setPlan(data);
     } catch (e) {
+      console.error(e);
       Alert.alert('Error', 'Could not update plan.');
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleAddGuest = async () => {
     if (!newGuest.trim() || !childId) return;
+    setSaving(true);
     try {
       await addBirthdayGuest(childId, newGuest.trim());
       setNewGuest('');
       fetchPlan();
     } catch (e) {
       Alert.alert('Error', 'Could not add guest.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -110,6 +126,17 @@ export default function BirthdayPlannerScreen({ route }: any) {
         </View>
 
         <View style={styles.inputGroup}>
+          <Text style={styles.label}>Date 📅</Text>
+          <TextInput
+            style={styles.input}
+            value={plan?.date ? new Date(plan.date).toISOString().split('T')[0] : ''}
+            onChangeText={(text) => setPlan(p => p ? { ...p, date: text } : null)}
+            onBlur={() => plan && handleUpdatePlan({ date: plan.date })}
+            placeholder="YYYY-MM-DD"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Notes 📝</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
@@ -120,12 +147,17 @@ export default function BirthdayPlannerScreen({ route }: any) {
             placeholder="Cake details, decoration ideas..."
           />
         </View>
+
+        {saving && <Text style={styles.savingTag}>Saving changes...</Text>}
       </View>
 
       <View style={[styles.card, styles.guestCard]}>
         <View style={styles.row}>
           <Text style={styles.title}>Guest List 👥</Text>
-          <Text style={styles.badge}>{confirmedCount} / {totalGuests} Confirmed</Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.badge}>{confirmedCount} / {totalGuests} Confirmed</Text>
+            {saving && <Text style={styles.miniSaving}>Updating...</Text>}
+          </View>
         </View>
 
         <View style={styles.addGuestRow}>
@@ -133,9 +165,11 @@ export default function BirthdayPlannerScreen({ route }: any) {
             style={[styles.input, { flex: 1, marginBottom: 0 }]}
             value={newGuest}
             onChangeText={setNewGuest}
+            onSubmitEditing={handleAddGuest}
             placeholder="Add new guest name..."
+            returnKeyType="done"
           />
-          <TouchableOpacity style={styles.addBtn} onPress={handleAddGuest}>
+          <TouchableOpacity style={styles.addBtn} onPress={handleAddGuest} disabled={saving}>
             <Text style={styles.addBtnText}>Add</Text>
           </TouchableOpacity>
         </View>
@@ -185,4 +219,6 @@ const styles = StyleSheet.create({
   guestName: { flex: 1, fontSize: 16, color: '#333' },
   strikethrough: { textDecorationLine: 'line-through', color: '#aaa' },
   deleteIcon: { fontSize: 18 },
+  savingTag: { fontSize: 12, color: '#FF6B6B', fontStyle: 'italic', marginTop: 10, textAlign: 'right' },
+  miniSaving: { fontSize: 10, color: '#FF6B6B', fontStyle: 'italic' },
 });
