@@ -59,7 +59,7 @@ export interface BirthdayGuest {
   status: 'Pending' | 'Confirmed' | 'Maybe' | 'Declined';
   additionalAdults: number;
   additionalChildren: number;
-  additionalNames?: string;
+  subGuests?: string;
 }
 
 export interface BirthdayPlan {

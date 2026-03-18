@@ -110,7 +110,7 @@ export default function BirthdayPlannerScreen({ route }: any) {
     const finalStatus = updates.status !== undefined ? updates.status : guest.status;
     const finalAdults = updates.additionalAdults !== undefined ? updates.additionalAdults : guest.additionalAdults;
     const finalChildren = updates.additionalChildren !== undefined ? updates.additionalChildren : guest.additionalChildren;
-    const finalSubGuests = updates.additionalNames !== undefined ? updates.additionalNames : (guest.additionalNames || '');
+    const finalSubGuests = updates.subGuests !== undefined ? updates.subGuests : (guest.subGuests || '');
 
     // Optimistic Update
     const updatedGuests = [...plan.guests];
@@ -119,7 +119,7 @@ export default function BirthdayPlannerScreen({ route }: any) {
       status: finalStatus, 
       additionalAdults: finalAdults, 
       additionalChildren: finalChildren,
-      additionalNames: finalSubGuests
+      subGuests: finalSubGuests
     };
     setPlan({ ...plan, guests: updatedGuests });
 
@@ -235,13 +235,13 @@ export default function BirthdayPlannerScreen({ route }: any) {
         </View>
       </View>
 
-      {(guest.additionalAdults > 0 || guest.additionalChildren > 0 || guest.additionalNames) && (
+      {(guest.additionalAdults > 0 || guest.additionalChildren > 0 || guest.subGuests) && (
         <TextInput
           style={[styles.subNamesInput, { backgroundColor: theme.colors.background + '55', color: theme.colors.text }]}
           placeholder="Enter names for extra guests..."
           placeholderTextColor="#aaa"
-          defaultValue={guest.additionalNames}
-          onEndEditing={(e) => handleUpdateGuest(guest.id, { additionalNames: e.nativeEvent.text })}
+          defaultValue={guest.subGuests}
+          onEndEditing={(e) => handleUpdateGuest(guest.id, { subGuests: e.nativeEvent.text })}
         />
       )}
 
