@@ -28,5 +28,11 @@ public record FamilyResponseDto(Guid Id, string Name, string InviteCode, IEnumer
 public record GenerateInviteDto(string? Email);
 public record InviteResponseDto(string Code, DateTime ExpiresAt);
 
+// ── Birthday Planner ──────────────────────────────────
+public record BirthdayPlanDto(Guid Id, Guid ChildId, string Theme, string Location, string Notes, DateTime? Date, IEnumerable<BirthdayGuestDto> Guests);
+public record BirthdayGuestDto(Guid Id, string Name, bool IsConfirmed);
+public record UpdateBirthdayPlanDto(string Theme, string Location, string Notes, DateTime? Date);
+public record AddBirthdayGuestDto(string Name);
+
 // ── Pagination ────────────────────────────────────────
 public record PagedResult<T>(IEnumerable<T> Items, int TotalCount, int Page, int PageSize);

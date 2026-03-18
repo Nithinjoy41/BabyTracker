@@ -223,3 +223,53 @@ public class InviteRepository : IInviteRepository
         if (invite is not null) { _db.FamilyInvites.Remove(invite); await _db.SaveChangesAsync(); }
     }
 }
+
+public class BirthdayRepository : IBirthdayRepository
+{
+    private readonly BabyTrackerDbContext _db;
+    public BirthdayRepository(BabyTrackerDbContext db) => _db = db;
+
+    public async Task<BirthdayPlan?> GetByChildIdAsync(Guid childId) =>
+        await _db.BirthdayPlans.Include(p => p.Guests).FirstOrDefaultAsync(p => p.ChildId == childId);
+
+    public async Task<BirthdayPlan> CreateAsync(BirthdayPlan plan)
+    {
+        _db.BirthdayPlans.Add(plan);
+        await _db.SaveChangesAsync();
+        return plan;
+    }
+
+    public async Task<BirthdayPlan> UpdateAsync(BirthdayPlan plan)
+    {
+        _db.BirthdayPlans.Update(plan);
+        await _db.SaveChangesAsync();
+        return plan;
+    }
+
+    public async Task<BirthdayGuest> AddGuestAsync(BirthdayGuest guest)
+    {
+        _db.BirthdayGuests.Add(guest);
+        await _db.SaveChangesAsync();
+        return guest;
+    }
+
+    public async Task<BirthdayGuest> UpdateGuestAsync(BirthdayGuest guest)
+    {
+        _db.BirthdayGuests.Update(guest);
+        await _db.SaveChangesAsync();
+        return guest;
+    }
+
+    public async Task RemoveGuestAsync(Guid guestId)
+    {
+        var guest = await _db.BirthdayGuests.FindAsync(guestId);
+        if (guest != null)
+        {
+            _db.BirthdayGuests.Remove(guest);
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    public async Task<BirthdayGuest?> GetGuestByIdAsync(Guid guestId) =>
+        await _db.BirthdayGuests.FindAsync(guestId);
+}

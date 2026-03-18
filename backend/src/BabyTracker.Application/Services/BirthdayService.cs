@@ -1,0 +1,73 @@
+using BabyTracker.Application.DTOs;
+using BabyTracker.Application.Interfaces;
+using BabyTracker.Domain.Entities;
+
+namespace BabyTracker.Application.Services;
+
+public class BirthdayService
+{
+    private readonly IBirthdayRepository _birthdays;
+    public BirthdayService(IBirthdayRepository birthdays) => _birthdays = birthdays;
+
+    public async Task<BirthdayPlanDto> GetOrCreatePlanAsync(Guid childId)
+    {
+        var plan = await _birthdays.GetByChildIdAsync(childId);
+        if (plan == null)
+        {
+            plan = new BirthdayPlan
+            {
+                Id = Guid.NewGuid(),
+                ChildId = childId,
+                Theme = "To be decided",
+                Location = "Home"
+            };
+            await _birthdays.CreateAsync(plan);
+        }
+        return MapToDto(plan);
+    }
+
+    public async Task<BirthdayPlanDto> UpdatePlanAsync(Guid childId, UpdateBirthdayPlanDto dto)
+    {
+        var plan = await _birthdays.GetByChildIdAsync(childId);
+        if (plan == null) throw new KeyNotFoundException("Birthday plan not found.");
+
+        plan.Theme = dto.Theme;
+        plan.Location = dto.Location;
+        plan.Notes = dto.Notes;
+        plan.Date = dto.Date;
+
+        await _birthdays.UpdateAsync(plan);
+        return MapToDto(plan);
+    }
+
+    public async Task<BirthdayGuestDto> AddGuestAsync(Guid childId, AddBirthdayGuestDto dto)
+    {
+        var plan = await _birthdays.GetByChildIdAsync(childId);
+        if (plan == null) throw new KeyNotFoundException("Birthday plan not found.");
+
+        var guest = new BirthdayGuest
+        {
+            Id = Guid.NewGuid(),
+            BirthdayPlanId = plan.Id,
+            Name = dto.Name,
+            IsConfirmed = false
+        };
+        await _birthdays.AddGuestAsync(guest);
+        return new BirthdayGuestDto(guest.Id, guest.Name, guest.IsConfirmed);
+    }
+
+    public async Task ToggleGuestConfirmationAsync(Guid guestId)
+    {
+        var guest = await _birthdays.GetGuestByIdAsync(guestId);
+        if (guest == null) throw new KeyNotFoundException("Guest not found.");
+
+        guest.IsConfirmed = !guest.IsConfirmed;
+        await _birthdays.UpdateGuestAsync(guest);
+    }
+    
+    public async Task DeleteGuestAsync(Guid guestId) => await _birthdays.RemoveGuestAsync(guestId);
+
+    private BirthdayPlanDto MapToDto(BirthdayPlan p) =>
+        new BirthdayPlanDto(p.Id, p.ChildId, p.Theme, p.Location, p.Notes, p.Date,
+            p.Guests.Select(g => new BirthdayGuestDto(g.Id, g.Name, g.IsConfirmed)));
+}

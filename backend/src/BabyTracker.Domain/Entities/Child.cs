@@ -13,4 +13,5 @@ public class Child
     public ICollection<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
     public ICollection<Vaccine> Vaccines { get; set; } = new List<Vaccine>();
     public ICollection<Photo> Photos { get; set; } = new List<Photo>();
+    public ICollection<BirthdayPlan> BirthdayPlans { get; set; } = new List<BirthdayPlan>();
 }

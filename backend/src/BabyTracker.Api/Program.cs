@@ -46,6 +46,7 @@ builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IVaccineRepository, VaccineRepository>();
 builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
 builder.Services.AddScoped<IInviteRepository, InviteRepository>();
+builder.Services.AddScoped<IBirthdayRepository, BirthdayRepository>();
 
 // ── Services ──────────────────────────────────────────
 builder.Services.AddScoped<AuthService>();
@@ -54,6 +55,7 @@ builder.Services.AddScoped<LogService>();
 builder.Services.AddScoped<VaccineService>();
 builder.Services.AddScoped<PhotoService>();
 builder.Services.AddScoped<InviteService>();
+builder.Services.AddScoped<BirthdayService>();
 
 // ── File Storage ──────────────────────────────────────
 var cloudinaryName = builder.Configuration["Cloudinary:CloudName"];
@@ -163,7 +165,7 @@ using (var scope = app.Services.CreateScope())
         {
             // Neon DB: drop the tables manually instead of dropping the entire DB
             // because dropping the DB breaks connections and permissions on managed hosts.
-            db.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS \"FamilyInvites\", \"FamilyMembers\", \"LogEntries\", \"Photos\", \"Vaccines\", \"Children\", \"Families\", \"Users\" CASCADE;");
+            db.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS \"BirthdayGuests\", \"BirthdayPlans\", \"FamilyInvites\", \"FamilyMembers\", \"LogEntries\", \"Photos\", \"Vaccines\", \"Children\", \"Families\", \"Users\" CASCADE;");
         }
         else
         {

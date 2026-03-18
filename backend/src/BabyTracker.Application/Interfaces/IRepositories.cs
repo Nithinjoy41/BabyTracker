@@ -61,3 +61,14 @@ public interface IPhotoRepository
     Task<Photo> CreateAsync(Photo photo);
     Task DeleteAsync(Guid id);
 }
+
+public interface IBirthdayRepository
+{
+    Task<BirthdayPlan?> GetByChildIdAsync(Guid childId);
+    Task<BirthdayPlan> CreateAsync(BirthdayPlan plan);
+    Task<BirthdayPlan> UpdateAsync(BirthdayPlan plan);
+    Task<BirthdayGuest> AddGuestAsync(BirthdayGuest guest);
+    Task<BirthdayGuest> UpdateGuestAsync(BirthdayGuest guest);
+    Task RemoveGuestAsync(Guid guestId);
+    Task<BirthdayGuest?> GetGuestByIdAsync(Guid guestId);
+}
