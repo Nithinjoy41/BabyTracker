@@ -1,5 +1,6 @@
 using BabyTracker.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace BabyTracker.Infrastructure.Data;
 
@@ -7,6 +8,14 @@ public class BabyTrackerDbContext : DbContext
 {
     public BabyTrackerDbContext(DbContextOptions<BabyTrackerDbContext> options)
         : base(options) { }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        // Suppress the "Pending Model Changes" warning which becomes an error in EF 9.0
+        // on some environments when switching providers (SQLite vs Postgres).
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+    }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Family> Families => Set<Family>();
