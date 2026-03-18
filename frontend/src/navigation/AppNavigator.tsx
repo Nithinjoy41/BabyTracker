@@ -47,6 +47,7 @@ function MainTabs() {
 
 export default function AppNavigator() {
   const { token, selectedChildId, children, isLoading } = useAuth();
+  console.log('[NAV] token:', !!token, 'selected:', selectedChildId, 'kids:', children.length, 'loading:', isLoading);
 
   if (isLoading) {
     return (
@@ -63,7 +64,7 @@ export default function AppNavigator() {
         <RootStack.Screen name="Auth" component={AuthNavigator} />
       ) : !selectedChildId || children.length === 0 ? (
         // Initial Child Picker
-        <RootStack.Screen name="ChildPicker" component={ChildPickerScreen} />
+        <RootStack.Screen name="InitialChildPicker" component={ChildPickerScreen} />
       ) : (
         // Main App
         <>

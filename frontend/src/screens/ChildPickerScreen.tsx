@@ -101,14 +101,25 @@ export default function ChildPickerScreen({ navigation }: any) {
   };
 
   const handleSelectChild = async (id: string) => {
-    await selectChild(id);
-    // On mobile web/browsers, state propagation can sometimes be racey with navigation.
-    // Adding a tiny delay to ensure the Auth state correctly triggers the AppNavigator's switch.
-    setTimeout(() => {
-      if (navigation?.canGoBack()) {
-        navigation.goBack();
-      }
-    }, 100);
+    try {
+      console.log('[PICKER] Selecting child:', id);
+      await selectChild(id);
+      console.log('[PICKER] Child selected, waiting for nav switch...');
+      
+      // On mobile web/browsers, state propagation can sometimes be racey with navigation.
+      // We only call goBack if we are in the "Switch Child" mode (not initial).
+      setTimeout(() => {
+        if (navigation?.canGoBack()) {
+          console.log('[PICKER] Can go back, popping screen');
+          navigation.goBack();
+        } else {
+          console.log('[PICKER] Initial picker, expecting stack replace');
+        }
+      }, 100);
+    } catch (e) {
+      console.error('[PICKER] Select failed:', e);
+      Alert.alert('Error', 'Could not select child.');
+    }
   };
 
   return (
