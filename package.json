@@ -1,0 +1,7 @@
+{
+  "name": "babytracker-monorepo",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ]
+}
