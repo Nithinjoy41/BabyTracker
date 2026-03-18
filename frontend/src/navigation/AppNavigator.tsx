@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { ActivityIndicator, View } from 'react-native';
 
 // Screens
@@ -15,6 +16,7 @@ import VaccinesScreen from '../screens/VaccinesScreen';
 import PhotosScreen from '../screens/PhotosScreen';
 import PhotoViewerScreen from '../screens/PhotoViewerScreen';
 import BirthdayPlannerScreen from '../screens/BirthdayPlannerScreen';
+import BabyPacman from '../screens/BabyPacman';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -30,18 +32,21 @@ function AuthNavigator() {
 }
 
 function MainTabs() {
+  const { theme } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#6C63FF' },
+        headerStyle: { backgroundColor: theme.colors.primary },
         headerTintColor: '#fff',
-        tabBarActiveTintColor: '#6C63FF',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarStyle: { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border },
+        headerTitleStyle: { fontWeight: '800' }
       }}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="History" component={HistoryScreen} />
-      <Tab.Screen name="Vaccines" component={VaccinesScreen} />
-      <Tab.Screen name="Photos" component={PhotosScreen} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Home', headerShown: false }} />
+      <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'Log History' }} />
+      <Tab.Screen name="Vaccines" component={VaccinesScreen} options={{ title: 'Vaccinations' }} />
+      <Tab.Screen name="Photos" component={PhotosScreen} options={{ title: 'Memory Box' }} />
     </Tab.Navigator>
   );
 }
@@ -89,6 +94,11 @@ export default function AppNavigator() {
             name="BirthdayPlanner"
             component={BirthdayPlannerScreen}
             options={{ headerShown: true, title: 'Birthday Planner', headerStyle: { backgroundColor: '#FF6B6B' }, headerTintColor: '#fff' }}
+          />
+          <RootStack.Screen
+            name="BabyPacman"
+            component={BabyPacman}
+            options={{ headerShown: false }}
           />
         </>
       )}

@@ -175,7 +175,7 @@ export default function BirthdayPlannerScreen({ route }: any) {
           placeholder="Other names (comma separated)"
           placeholderTextColor="#aaa"
           defaultValue={guest.additionalNames}
-          onBlur={(e) => handleUpdateGuest(guest.id, { additionalNames: e.nativeEvent.text })}
+          onEndEditing={(e) => handleUpdateGuest(guest.id, { additionalNames: e.nativeEvent.text })}
         />
       </View>
       
@@ -192,7 +192,15 @@ export default function BirthdayPlannerScreen({ route }: any) {
             <Text style={styles.statusEmoji}>{status === 'Confirmed' ? '✅' : status === 'Maybe' ? '❓' : '⏳'}</Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity onPress={() => handleDeleteGuest(guest.id)} style={styles.deleteBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            Alert.alert('Remove Guest', 'Are you sure?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Remove', style: 'destructive', onPress: () => handleDeleteGuest(guest.id) }
+            ]);
+          }} 
+          style={styles.deleteBtn}
+        >
           <Text style={styles.deleteIcon}>🗑️</Text>
         </TouchableOpacity>
       </View>
@@ -330,6 +338,7 @@ const styles = StyleSheet.create({
   statsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 22, fontWeight: '800' },
   subtitle: { fontSize: 13, opacity: 0.6, marginTop: 4, marginBottom: 20 },
+  inputGroup: { marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   input: { borderWidth: 1.5, borderRadius: 16, padding: 14, fontSize: 16, marginBottom: 20 },
   textArea: { height: 100, textAlignVertical: 'top' },
