@@ -4,7 +4,7 @@ import {
   Alert, ActivityIndicator, FlatList
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { getBirthdayPlan, updateBirthdayPlan, addBirthdayGuest, toggleGuest, deleteGuest } from '../api/birthdays';
+import { getBirthdayPlan, updateBirthdayPlan, addBirthdayGuest, updateGuestStatus, deleteGuest } from '../api/birthdays';
 import { BirthdayPlan, BirthdayGuest } from '../types';
 
 export default function BirthdayPlannerScreen({ route }: any) {
@@ -68,12 +68,12 @@ export default function BirthdayPlannerScreen({ route }: any) {
     }
   };
 
-  const handleToggleGuest = async (guestId: string) => {
+  const handleUpdateStatus = async (guestId: string, status: string) => {
     try {
-      await toggleGuest(guestId);
+      await updateGuestStatus(guestId, status);
       fetchPlan();
     } catch (e) {
-      Alert.alert('Error', 'Could not update guest.');
+      Alert.alert('Error', 'Could not update guest status.');
     }
   };
 
@@ -94,8 +94,49 @@ export default function BirthdayPlannerScreen({ route }: any) {
     );
   }
 
-  const confirmedCount = plan?.guests.filter(g => g.isConfirmed).length || 0;
+  const confirmedCount = plan?.guests.filter(g => g.status === 'Confirmed').length || 0;
   const totalGuests = plan?.guests.length || 0;
+
+  const renderGuestItem = (guest: BirthdayGuest) => (
+    <View key={guest.id} style={styles.guestItem}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.guestName, guest.status === 'Confirmed' && styles.confirmedText]}>
+          {guest.name}
+        </Text>
+      </View>
+      
+      <View style={styles.statusButtons}>
+        <TouchableOpacity 
+          onPress={() => handleUpdateStatus(guest.id, 'Confirmed')}
+          style={[styles.statusBtn, guest.status === 'Confirmed' && styles.statusBtnConfirmed]}
+        >
+          <Text style={styles.statusEmoji}>✅</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={() => handleUpdateStatus(guest.id, 'Maybe')}
+          style={[styles.statusBtn, guest.status === 'Maybe' && styles.statusBtnMaybe]}
+        >
+          <Text style={styles.statusEmoji}>❓</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={() => handleUpdateStatus(guest.id, 'Pending')}
+          style={[styles.statusBtn, guest.status === 'Pending' && styles.statusBtnPending]}
+        >
+          <Text style={styles.statusEmoji}>⏳</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleDeleteGuest(guest.id)} style={styles.deleteBtn}>
+          <Text style={styles.deleteIcon}>🗑️</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const confirmedGuests = plan?.guests.filter(g => g.status === 'Confirmed') || [];
+  const maybeGuests = plan?.guests.filter(g => g.status === 'Maybe') || [];
+  const pendingGuests = plan?.guests.filter(g => g.status === 'Pending' || g.status === 'Declined') || [];
 
   return (
     <ScrollView style={styles.container}>
@@ -174,22 +215,30 @@ export default function BirthdayPlannerScreen({ route }: any) {
           </TouchableOpacity>
         </View>
 
-        {plan?.guests.map((guest) => (
-          <View key={guest.id} style={styles.guestItem}>
-            <TouchableOpacity 
-              style={[styles.check, guest.isConfirmed && styles.checked]} 
-              onPress={() => handleToggleGuest(guest.id)}
-            >
-              {guest.isConfirmed && <Text style={styles.checkIcon}>✓</Text>}
-            </TouchableOpacity>
-            <Text style={[styles.guestName, guest.isConfirmed && styles.strikethrough]}>
-              {guest.name}
-            </Text>
-            <TouchableOpacity onPress={() => handleDeleteGuest(guest.id)}>
-              <Text style={styles.deleteIcon}>🗑️</Text>
-            </TouchableOpacity>
+        {confirmedGuests.length > 0 && (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>✅ Confirmed ({confirmedGuests.length})</Text>
           </View>
-        ))}
+        )}
+        {confirmedGuests.map(renderGuestItem)}
+
+        {maybeGuests.length > 0 && (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>❓ Maybe ({maybeGuests.length})</Text>
+          </View>
+        )}
+        {maybeGuests.map(renderGuestItem)}
+
+        {pendingGuests.length > 0 && (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>⏳ Pending ({pendingGuests.length})</Text>
+          </View>
+        )}
+        {pendingGuests.map(renderGuestItem)}
+
+        {totalGuests === 0 && (
+          <Text style={styles.emptyText}>No guests added yet. Type a name above to start your list!</Text>
+        )}
       </View>
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -212,13 +261,20 @@ const styles = StyleSheet.create({
   addGuestRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   addBtn: { backgroundColor: '#FF6B6B', borderRadius: 12, paddingHorizontal: 20, justifyContent: 'center' },
   addBtnText: { color: '#fff', fontWeight: '700' },
-  guestItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
-  check: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#FF6B6B', marginRight: 12, justifyContent: 'center', alignItems: 'center' },
-  checked: { backgroundColor: '#FF6B6B' },
-  checkIcon: { color: '#fff', fontSize: 14, fontWeight: '900' },
-  guestName: { flex: 1, fontSize: 16, color: '#333' },
-  strikethrough: { textDecorationLine: 'line-through', color: '#aaa' },
-  deleteIcon: { fontSize: 18 },
+  guestItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+  statusButtons: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  statusBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F8F8F8', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#EEE' },
+  statusBtnConfirmed: { backgroundColor: '#E1F5FE', borderColor: '#03A9F4' },
+  statusBtnMaybe: { backgroundColor: '#FFF9C4', borderColor: '#FBC02D' },
+  statusBtnPending: { backgroundColor: '#F5F5F5', borderColor: '#CCC' },
+  statusEmoji: { fontSize: 14 },
+  guestName: { fontSize: 16, color: '#333', fontWeight: '500' },
+  confirmedText: { color: '#03A9F4', fontWeight: '700' },
+  deleteBtn: { padding: 4, marginLeft: 4 },
+  deleteIcon: { fontSize: 16 },
+  sectionHeader: { marginTop: 20, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#FFEBEB', paddingBottom: 4 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#FF6B6B', textTransform: 'uppercase' },
+  emptyText: { textAlign: 'center', color: '#aaa', marginTop: 20, fontStyle: 'italic' },
   savingTag: { fontSize: 12, color: '#FF6B6B', fontStyle: 'italic', marginTop: 10, textAlign: 'right' },
   miniSaving: { fontSize: 10, color: '#FF6B6B', fontStyle: 'italic' },
 });

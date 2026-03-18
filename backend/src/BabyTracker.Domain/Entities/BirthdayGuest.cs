@@ -11,5 +11,5 @@ public class BirthdayGuest
     public BirthdayPlan BirthdayPlan { get; set; } = null!;
     
     public string Name { get; set; } = string.Empty;
-    public bool IsConfirmed { get; set; }
+    public string Status { get; set; } = "Pending"; // Pending, Confirmed, Maybe, Declined
 }

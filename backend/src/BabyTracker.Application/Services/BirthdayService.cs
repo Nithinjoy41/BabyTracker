@@ -50,18 +50,18 @@ public class BirthdayService
             Id = Guid.NewGuid(),
             BirthdayPlanId = plan.Id,
             Name = dto.Name,
-            IsConfirmed = false
+            Status = "Pending"
         };
         await _birthdays.AddGuestAsync(guest);
-        return new BirthdayGuestDto(guest.Id, guest.Name, guest.IsConfirmed);
+        return new BirthdayGuestDto(guest.Id, guest.Name, guest.Status);
     }
 
-    public async Task ToggleGuestConfirmationAsync(Guid guestId)
+    public async Task UpdateGuestStatusAsync(Guid guestId, string status)
     {
         var guest = await _birthdays.GetGuestByIdAsync(guestId);
         if (guest == null) throw new KeyNotFoundException("Guest not found.");
 
-        guest.IsConfirmed = !guest.IsConfirmed;
+        guest.Status = status;
         await _birthdays.UpdateGuestAsync(guest);
     }
     
@@ -69,5 +69,5 @@ public class BirthdayService
 
     private BirthdayPlanDto MapToDto(BirthdayPlan p) =>
         new BirthdayPlanDto(p.Id, p.ChildId, p.Theme, p.Location, p.Notes, p.Date,
-            p.Guests.Select(g => new BirthdayGuestDto(g.Id, g.Name, g.IsConfirmed)));
+            p.Guests.Select(g => new BirthdayGuestDto(g.Id, g.Name, g.Status)));
 }

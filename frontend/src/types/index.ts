@@ -56,7 +56,7 @@ export interface FamilyInfo {
 export interface BirthdayGuest {
   id: string;
   name: string;
-  isConfirmed: boolean;
+  status: 'Pending' | 'Confirmed' | 'Maybe' | 'Declined';
 }
 
 export interface BirthdayPlan {

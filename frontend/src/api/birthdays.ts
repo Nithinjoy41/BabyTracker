@@ -10,8 +10,8 @@ export const updateBirthdayPlan = (childId: string, data: Partial<BirthdayPlan>)
 export const addBirthdayGuest = (childId: string, name: string) => 
   client.post<BirthdayGuest>(`/Birthday/${childId}/guests`, { name });
 
-export const toggleGuest = (guestId: string) => 
-  client.patch(`/Birthday/guests/${guestId}/toggle`);
+export const updateGuestStatus = (guestId: string, status: string) => 
+  client.patch(`/Birthday/guests/${guestId}/status`, { status });
 
 export const deleteGuest = (guestId: string) => 
   client.delete(`/Birthday/guests/${guestId}`);

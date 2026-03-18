@@ -33,10 +33,10 @@ public class BirthdayController : BaseApiController
         return Ok(guest);
     }
 
-    [HttpPatch("guests/{guestId}/toggle")]
-    public async Task<IActionResult> ToggleGuest(Guid guestId)
+    [HttpPatch("guests/{guestId}/status")]
+    public async Task<IActionResult> UpdateGuestStatus(Guid guestId, [FromBody] UpdateGuestStatusDto dto)
     {
-        await _birthdays.ToggleGuestConfirmationAsync(guestId);
+        await _birthdays.UpdateGuestStatusAsync(guestId, dto.Status);
         return NoContent();
     }
 
