@@ -46,20 +46,24 @@ export default function BirthdayPlannerScreen({ route }: any) {
   const handleUpdatePlan = async (updates: Partial<BirthdayPlan>) => {
     if (!childId || !plan) return;
     
-    const updatedPlan = {
+    const updatedPlanState = { ...plan, ...updates };
+    
+    const apiPayload = {
       theme: updates.theme !== undefined ? updates.theme : plan.theme,
       location: updates.location !== undefined ? updates.location : plan.location,
       notes: updates.notes !== undefined ? updates.notes : plan.notes,
       date: updates.date !== undefined ? updates.date : plan.date,
     };
 
+    setPlan(updatedPlanState);
     setSaving(true);
     try {
-      const { data } = await updateBirthdayPlan(childId, updatedPlan);
+      const { data } = await updateBirthdayPlan(childId, apiPayload);
       setPlan(data);
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'Could not update plan.');
+      fetchPlan();
     } finally {
       setSaving(false);
     }
@@ -69,44 +73,66 @@ export default function BirthdayPlannerScreen({ route }: any) {
     if (!newGuest.trim() || !childId) return;
     setSaving(true);
     try {
-      await addBirthdayGuest(childId, newGuest.trim());
+      const { data } = await addBirthdayGuest(childId, newGuest.trim());
       setNewGuest('');
-      fetchPlan();
+      // Update local state with the new guest returned from API
+      if (plan) {
+        setPlan({
+          ...plan,
+          guests: [...plan.guests, data]
+        });
+      }
     } catch (e) {
       Alert.alert('Error', 'Could not add guest.');
+      fetchPlan(); // Rollback/Sync on error
     } finally {
       setSaving(false);
     }
   };
 
   const handleUpdateGuest = async (guestId: string, updates: Partial<BirthdayGuest>) => {
-    const guest = plan?.guests.find(g => g.id === guestId);
-    if (!guest) return;
+    if (!plan) return;
+    const guestIndex = plan.guests.findIndex(g => g.id === guestId);
+    if (guestIndex === -1) return;
 
+    const guest = plan.guests[guestIndex];
     const finalStatus = updates.status !== undefined ? updates.status : guest.status;
     const finalAdults = updates.additionalAdults !== undefined ? updates.additionalAdults : guest.additionalAdults;
     const finalChildren = updates.additionalChildren !== undefined ? updates.additionalChildren : guest.additionalChildren;
-    
-    // Sub-guests names
-    let finalSubGuests = guest.additionalNames || '';
-    if (updates.additionalNames !== undefined) {
-      finalSubGuests = updates.additionalNames;
-    }
+    const finalSubGuests = updates.additionalNames !== undefined ? updates.additionalNames : (guest.additionalNames || '');
+
+    // Optimistic Update
+    const updatedGuests = [...plan.guests];
+    updatedGuests[guestIndex] = { 
+      ...guest, 
+      status: finalStatus, 
+      additionalAdults: finalAdults, 
+      additionalChildren: finalChildren,
+      additionalNames: finalSubGuests
+    };
+    setPlan({ ...plan, guests: updatedGuests });
 
     try {
       await updateGuest(guestId, finalStatus, finalAdults, finalChildren, finalSubGuests);
-      fetchPlan();
+      // No need to fetchPlan() on success as we updated locally
     } catch (e) {
       Alert.alert('Error', 'Could not update guest.');
+      fetchPlan(); // Re-sync on error
     }
   };
 
   const handleDeleteGuest = async (guestId: string) => {
+    if (!plan) return;
+    
+    // Optimistic delete
+    const updatedGuests = plan.guests.filter(g => g.id !== guestId);
+    setPlan({ ...plan, guests: updatedGuests });
+
     try {
       await deleteGuest(guestId);
-      fetchPlan();
     } catch (e) {
       Alert.alert('Error', 'Could not remove guest.');
+      fetchPlan(); // Rollback on error
     }
   };
 
