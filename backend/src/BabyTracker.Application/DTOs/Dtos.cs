@@ -30,9 +30,9 @@ public record InviteResponseDto(string Code, DateTime ExpiresAt);
 
 // ── Birthday Planner ──────────────────────────────────
 public record BirthdayPlanDto(Guid Id, Guid ChildId, string Theme, string Location, string Notes, DateTime? Date, IEnumerable<BirthdayGuestDto> Guests);
-public record BirthdayGuestDto(Guid Id, string Name, string Status);
+public record BirthdayGuestDto(Guid Id, string Name, string Status, int AdditionalAdults, int AdditionalChildren);
 public record UpdateBirthdayPlanDto(string Theme, string Location, string Notes, DateTime? Date);
-public record UpdateGuestStatusDto(string Status);
+public record UpdateGuestDto(string Status, int AdditionalAdults, int AdditionalChildren);
 public record AddBirthdayGuestDto(string Name);
 
 // ── Pagination ────────────────────────────────────────

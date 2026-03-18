@@ -4,7 +4,7 @@ import {
   Alert, ActivityIndicator, FlatList
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { getBirthdayPlan, updateBirthdayPlan, addBirthdayGuest, updateGuestStatus, deleteGuest } from '../api/birthdays';
+import { getBirthdayPlan, updateBirthdayPlan, addBirthdayGuest, updateGuest, deleteGuest } from '../api/birthdays';
 import { BirthdayPlan, BirthdayGuest } from '../types';
 
 export default function BirthdayPlannerScreen({ route }: any) {
@@ -68,12 +68,19 @@ export default function BirthdayPlannerScreen({ route }: any) {
     }
   };
 
-  const handleUpdateStatus = async (guestId: string, status: string) => {
+  const handleUpdateGuest = async (guestId: string, updates: Partial<BirthdayGuest>) => {
+    const guest = plan?.guests.find(g => g.id === guestId);
+    if (!guest) return;
+
+    const finalStatus = updates.status !== undefined ? updates.status : guest.status;
+    const finalAdults = updates.additionalAdults !== undefined ? updates.additionalAdults : guest.additionalAdults;
+    const finalChildren = updates.additionalChildren !== undefined ? updates.additionalChildren : guest.additionalChildren;
+
     try {
-      await updateGuestStatus(guestId, status);
+      await updateGuest(guestId, finalStatus, finalAdults, finalChildren);
       fetchPlan();
     } catch (e) {
-      Alert.alert('Error', 'Could not update guest status.');
+      Alert.alert('Error', 'Could not update guest.');
     }
   };
 
@@ -94,8 +101,22 @@ export default function BirthdayPlannerScreen({ route }: any) {
     );
   }
 
-  const confirmedCount = plan?.guests.filter(g => g.status === 'Confirmed').length || 0;
-  const totalGuests = plan?.guests.length || 0;
+  const confirmedGuestsList = plan?.guests.filter(g => g.status === 'Confirmed') || [];
+  const maybeGuestsList = plan?.guests.filter(g => g.status === 'Maybe') || [];
+  const pendingGuestsList = plan?.guests.filter(g => g.status === 'Pending') || [];
+
+  const totalMainGuests = plan?.guests.length || 0;
+  const confirmedAdults = confirmedGuestsList.reduce((acc, g) => acc + 1 + g.additionalAdults, 0);
+  const confirmedChildren = confirmedGuestsList.reduce((acc, g) => acc + g.additionalChildren, 0);
+  const totalConfirmed = confirmedAdults + confirmedChildren;
+
+  const maybeAdults = maybeGuestsList.reduce((acc, g) => acc + 1 + g.additionalAdults, 0);
+  const maybeChildren = maybeGuestsList.reduce((acc, g) => acc + g.additionalChildren, 0);
+  const totalMaybe = maybeAdults + maybeChildren;
+
+  // Suggestions logic
+  const chairsNeeded = totalConfirmed;
+  const platesNeeded = Math.ceil((confirmedAdults * 1.5) + (confirmedChildren * 1.0));
 
   const renderGuestItem = (guest: BirthdayGuest) => (
     <View key={guest.id} style={styles.guestItem}>
@@ -103,25 +124,44 @@ export default function BirthdayPlannerScreen({ route }: any) {
         <Text style={[styles.guestName, guest.status === 'Confirmed' && styles.confirmedText]}>
           {guest.name}
         </Text>
+        <View style={styles.subGuestRow}>
+          <Text style={styles.subGuestLabel}>Adults:</Text>
+          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalAdults: Math.max(0, guest.additionalAdults - 1) })}>
+            <Text style={styles.counterBtn}>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.counterText}>{1 + guest.additionalAdults}</Text>
+          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalAdults: guest.additionalAdults + 1 })}>
+            <Text style={styles.counterBtn}>+</Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.subGuestLabel, { marginLeft: 10 }]}>Children:</Text>
+          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalChildren: Math.max(0, guest.additionalChildren - 1) })}>
+            <Text style={styles.counterBtn}>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.counterText}>{guest.additionalChildren}</Text>
+          <TouchableOpacity onPress={() => handleUpdateGuest(guest.id, { additionalChildren: guest.additionalChildren + 1 })}>
+            <Text style={styles.counterBtn}>+</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       
       <View style={styles.statusButtons}>
         <TouchableOpacity 
-          onPress={() => handleUpdateStatus(guest.id, 'Confirmed')}
+          onPress={() => handleUpdateGuest(guest.id, { status: 'Confirmed' })}
           style={[styles.statusBtn, guest.status === 'Confirmed' && styles.statusBtnConfirmed]}
         >
           <Text style={styles.statusEmoji}>✅</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
-          onPress={() => handleUpdateStatus(guest.id, 'Maybe')}
+          onPress={() => handleUpdateGuest(guest.id, { status: 'Maybe' })}
           style={[styles.statusBtn, guest.status === 'Maybe' && styles.statusBtnMaybe]}
         >
           <Text style={styles.statusEmoji}>❓</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
-          onPress={() => handleUpdateStatus(guest.id, 'Pending')}
+          onPress={() => handleUpdateGuest(guest.id, { status: 'Pending' })}
           style={[styles.statusBtn, guest.status === 'Pending' && styles.statusBtnPending]}
         >
           <Text style={styles.statusEmoji}>⏳</Text>
@@ -134,12 +174,35 @@ export default function BirthdayPlannerScreen({ route }: any) {
     </View>
   );
 
-  const confirmedGuests = plan?.guests.filter(g => g.status === 'Confirmed') || [];
-  const maybeGuests = plan?.guests.filter(g => g.status === 'Maybe') || [];
-  const pendingGuests = plan?.guests.filter(g => g.status === 'Pending' || g.status === 'Declined') || [];
-
   return (
     <ScrollView style={styles.container}>
+      {/* ── Planning Summary ✨ ── */}
+      <View style={[styles.card, styles.statsCard]}>
+        <Text style={styles.sectionTitle}>Planning Summary ✨</Text>
+        <View style={styles.statsGrid}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{totalConfirmed}</Text>
+            <Text style={styles.statLabel}>Confirmed</Text>
+            <Text style={styles.statSub}>({confirmedAdults}A, {confirmedChildren}C)</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{totalMaybe}</Text>
+            <Text style={styles.statLabel}>Maybe</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{chairsNeeded}</Text>
+            <Text style={styles.statLabel}>Chairs</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: '#4ECDC4' }]}>{platesNeeded}</Text>
+            <Text style={styles.statLabel}>Plates/Food</Text>
+          </View>
+        </View>
+        <View style={styles.tipBox}>
+          <Text style={styles.tipText}>💡 Suggestion: Order approx. {platesNeeded} plates for {totalConfirmed} confirmed guests.</Text>
+        </View>
+      </View>
+
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.title}>Party for {child?.name} 🥳</Text>
@@ -205,7 +268,7 @@ export default function BirthdayPlannerScreen({ route }: any) {
         <View style={styles.row}>
           <Text style={styles.title}>Guest List 👥</Text>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={styles.badge}>{confirmedCount} / {totalGuests} Confirmed</Text>
+            <Text style={styles.badge}>{totalConfirmed} Confirmed</Text>
             {saving && <Text style={styles.miniSaving}>Updating...</Text>}
           </View>
         </View>
@@ -224,28 +287,28 @@ export default function BirthdayPlannerScreen({ route }: any) {
           </TouchableOpacity>
         </View>
 
-        {confirmedGuests.length > 0 && (
+        {confirmedGuestsList.length > 0 && (
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>✅ Confirmed ({confirmedGuests.length})</Text>
+            <Text style={styles.sectionTitle}>✅ Confirmed ({confirmedGuestsList.length})</Text>
           </View>
         )}
-        {confirmedGuests.map(renderGuestItem)}
+        {confirmedGuestsList.map(renderGuestItem)}
 
-        {maybeGuests.length > 0 && (
+        {maybeGuestsList.length > 0 && (
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>❓ Maybe ({maybeGuests.length})</Text>
+            <Text style={styles.sectionTitle}>❓ Maybe ({maybeGuestsList.length})</Text>
           </View>
         )}
-        {maybeGuests.map(renderGuestItem)}
+        {maybeGuestsList.map(renderGuestItem)}
 
-        {pendingGuests.length > 0 && (
+        {pendingGuestsList.length > 0 && (
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>⏳ Pending ({pendingGuests.length})</Text>
+            <Text style={styles.sectionTitle}>⏳ Pending ({pendingGuestsList.length})</Text>
           </View>
         )}
-        {pendingGuests.map(renderGuestItem)}
+        {pendingGuestsList.map(renderGuestItem)}
 
-        {totalGuests === 0 && (
+        {totalMainGuests === 0 && (
           <Text style={styles.emptyText}>No guests added yet. Type a name above to start your list!</Text>
         )}
       </View>
@@ -273,7 +336,19 @@ const styles = StyleSheet.create({
   addGuestRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   addBtn: { backgroundColor: '#FF6B6B', borderRadius: 12, paddingHorizontal: 20, justifyContent: 'center' },
   addBtnText: { color: '#fff', fontWeight: '700' },
-  guestItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+  statsCard: { backgroundColor: '#6C63FF22', borderBottomWidth: 4, borderBottomColor: '#6C63FF' },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 16 },
+  statItem: { flex: 1, minWidth: '45%', backgroundColor: '#fff', borderRadius: 16, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#6C63FF22' },
+  statValue: { fontSize: 24, fontWeight: '800', color: '#6C63FF' },
+  statLabel: { fontSize: 12, fontWeight: '600', color: '#888', marginTop: 2 },
+  statSub: { fontSize: 10, color: '#aaa' },
+  tipBox: { backgroundColor: '#fff', padding: 12, borderRadius: 12, marginTop: 16, borderLeftWidth: 4, borderLeftColor: '#4ECDC4' },
+  tipText: { fontSize: 13, color: '#555', fontStyle: 'italic' },
+  subGuestRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  subGuestLabel: { fontSize: 11, color: '#888', marginRight: 6 },
+  counterBtn: { fontSize: 18, color: '#FF6B6B', fontWeight: '800', paddingHorizontal: 8 },
+  counterText: { fontSize: 14, fontWeight: '700', color: '#333', minWidth: 20, textAlign: 'center' },
+  guestItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
   statusButtons: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   statusBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F8F8F8', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#EEE' },
   statusBtnConfirmed: { backgroundColor: '#E1F5FE', borderColor: '#03A9F4' },
