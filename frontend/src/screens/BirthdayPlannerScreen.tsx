@@ -46,12 +46,15 @@ export default function BirthdayPlannerScreen({ route }: any) {
   const handleUpdatePlan = async (updates: Partial<BirthdayPlan>) => {
     if (!childId || !plan) return;
     
+    // Optimistic Update
     const updatedPlanState = { ...plan, ...updates };
     
     const apiPayload = {
       theme: updates.theme !== undefined ? updates.theme : plan.theme,
       location: updates.location !== undefined ? updates.location : plan.location,
       notes: updates.notes !== undefined ? updates.notes : plan.notes,
+      foodAndDrinks: updates.foodAndDrinks !== undefined ? updates.foodAndDrinks : plan.foodAndDrinks,
+      aiSummary: updates.aiSummary !== undefined ? updates.aiSummary : plan.aiSummary,
       date: updates.date !== undefined ? updates.date : plan.date,
     };
 
@@ -67,6 +70,14 @@ export default function BirthdayPlannerScreen({ route }: any) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleGenerateSummary = () => {
+    if (!plan) return;
+    const themeStr = plan.theme || 'unthemed';
+    const locStr = plan.location || 'somewhere special';
+    const summary = `Get ready for ${child?.name}'s epic ${themeStr} celebration! 🎈 We're hosting ${stats.confirmed} friends at ${locStr} for a day of magic and cake. It's going to be a blast! ✨`;
+    handleUpdatePlan({ aiSummary: summary });
   };
 
   const handleAddGuest = async () => {
@@ -146,13 +157,19 @@ export default function BirthdayPlannerScreen({ route }: any) {
     const confirmedAdults = confirmedList.reduce((acc, g) => acc + 1 + g.additionalAdults, 0);
     const confirmedChildren = confirmedList.reduce((acc, g) => acc + g.additionalChildren, 0);
     
-    const maybeTotal = maybeList.reduce((acc, g) => acc + 1 + g.additionalAdults + g.additionalChildren, 0);
+    const maybeAdults = maybeList.reduce((acc, g) => acc + 1 + g.additionalAdults, 0);
+    const maybeChildren = maybeList.reduce((acc, g) => acc + g.additionalChildren, 0);
+
+    // Food calculation: 1 plate per adult, 0.5 per child, plus 5 buffer
+    // Example: 30 adults + 10 children = 35 + 5 = 40 plates
+    const baseFood = confirmedAdults + (confirmedChildren * 0.5);
+    const recommendedFood = Math.ceil(baseFood + 5);
 
     return {
       confirmed: confirmedAdults + confirmedChildren,
-      maybe: maybeTotal,
-      chairs: confirmedAdults + confirmedChildren,
-      food: Math.ceil((confirmedAdults * 1.5) + (confirmedChildren * 1.0)),
+      maybe: maybeAdults + maybeChildren,
+      chairs: confirmedAdults + confirmedChildren, // One chair per soul
+      food: recommendedFood,
       adults: confirmedAdults,
       children: confirmedChildren
     };
@@ -254,13 +271,13 @@ export default function BirthdayPlannerScreen({ route }: any) {
           <Text style={styles.heroTitle}>Planning for {child?.name}</Text>
           <View style={styles.mainStatsRow}>
             <View style={styles.mainStat}>
-              <Text style={styles.mainStatValue}>{stats.confirmed}</Text>
-              <Text style={styles.mainStatLabel}>Confirmed</Text>
+              <Text style={styles.mainStatValue}>{stats.adults}</Text>
+              <Text style={styles.mainStatLabel}>Adults</Text>
             </View>
             <StatDivider />
             <View style={styles.mainStat}>
-              <Text style={styles.mainStatValue}>{stats.chairs}</Text>
-              <Text style={styles.mainStatLabel}>Chairs</Text>
+              <Text style={styles.mainStatValue}>{stats.children}</Text>
+              <Text style={styles.mainStatLabel}>Children</Text>
             </View>
             <StatDivider />
             <View style={styles.mainStat}>
@@ -324,7 +341,37 @@ export default function BirthdayPlannerScreen({ route }: any) {
               value={plan?.notes}
               onChangeText={(text) => setPlan(p => p ? { ...p, notes: text } : null)}
               onBlur={() => plan && handleUpdatePlan({ notes: plan.notes })}
-              placeholder="Menu, entertainment, or special requests..."
+              placeholder="Gifts, entertainment, or special requests..."
+            />
+          </View>
+
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.cardTitle, { color: theme.colors.text, marginBottom: 20 }]}>Menu & Catering 🍕</Text>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>FOOD & DRINKS</Text>
+            <TextInput
+              style={[styles.input, styles.textArea, { color: theme.colors.text, borderColor: theme.colors.border }]}
+              multiline
+              value={plan?.foodAndDrinks}
+              onChangeText={(text) => setPlan(p => p ? { ...p, foodAndDrinks: text } : null)}
+              onBlur={() => plan && handleUpdatePlan({ foodAndDrinks: plan.foodAndDrinks })}
+              placeholder="Cake, snacks, drinks list..."
+            />
+          </View>
+
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>AI Summary ✨</Text>
+              <TouchableOpacity style={[styles.aiBtn, { backgroundColor: theme.colors.primary }]} onPress={handleGenerateSummary}>
+                <Text style={styles.aiBtnText}>Suggest</Text>
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={[styles.input, styles.textArea, { color: theme.colors.text, borderColor: theme.colors.border, fontStyle: 'italic' }]}
+              multiline
+              value={plan?.aiSummary}
+              onChangeText={(text) => setPlan(p => p ? { ...p, aiSummary: text } : null)}
+              onBlur={() => plan && handleUpdatePlan({ aiSummary: plan.aiSummary })}
+              placeholder="Magic summary will appear here..."
             />
           </View>
 
@@ -399,6 +446,8 @@ const styles = StyleSheet.create({
   addBtnText: { color: '#FFF', fontWeight: '900' },
   listSection: { marginTop: 10 },
   listHeader: { fontSize: 12, fontWeight: '900', marginBottom: 15, letterSpacing: 1 },
+  aiBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+  aiBtnText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
   guestCardItem: { borderRadius: 24, padding: 16, marginBottom: 16, borderWidth: 1 },
   guestHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
   guestName: { fontSize: 18, fontWeight: '800' },

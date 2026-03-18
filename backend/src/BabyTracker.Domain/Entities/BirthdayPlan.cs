@@ -13,6 +13,8 @@ public class BirthdayPlan
     public string Theme { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
+    public string FoodAndDrinks { get; set; } = string.Empty;
+    public string AiSummary { get; set; } = string.Empty;
     public DateTime? Date { get; set; }
     
     public ICollection<BirthdayGuest> Guests { get; set; } = new List<BirthdayGuest>();

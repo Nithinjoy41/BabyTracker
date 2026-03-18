@@ -68,6 +68,8 @@ export interface BirthdayPlan {
   theme: string;
   location: string;
   notes: string;
-  date: string | null;
+  foodAndDrinks: string;
+  aiSummary: string;
+  date?: string;
   guests: BirthdayGuest[];
 }

@@ -4,8 +4,8 @@ import { BirthdayPlan, BirthdayGuest } from '../types';
 export const getBirthdayPlan = (childId: string) => 
   client.get<BirthdayPlan>(`/Birthday/${childId}`);
 
-export const updateBirthdayPlan = (childId: string, data: Partial<BirthdayPlan>) => 
-  client.put<BirthdayPlan>(`/Birthday/${childId}`, data);
+export const updateBirthdayPlan = (childId: string, plan: { theme: string, location: string, notes: string, foodAndDrinks: string, aiSummary: string, date?: string }) => 
+  client.post<BirthdayPlan>(`/birthdays/${childId}`, plan);
 
 export const addBirthdayGuest = (childId: string, name: string) => 
   client.post<BirthdayGuest>(`/Birthday/${childId}/guests`, { name });

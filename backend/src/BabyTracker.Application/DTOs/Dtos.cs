@@ -29,9 +29,9 @@ public record GenerateInviteDto(string? Email);
 public record InviteResponseDto(string Code, DateTime ExpiresAt);
 
 // ── Birthday Planner ──────────────────────────────────
-public record BirthdayPlanDto(Guid Id, Guid ChildId, string Theme, string Location, string Notes, DateTime? Date, IEnumerable<BirthdayGuestDto> Guests);
+public record BirthdayPlanDto(Guid Id, Guid ChildId, string Theme, string Location, string Notes, string FoodAndDrinks, string AiSummary, DateTime? Date, IEnumerable<BirthdayGuestDto> Guests);
 public record BirthdayGuestDto(Guid Id, string Name, string Status, int AdditionalAdults, int AdditionalChildren, string? SubGuests);
-public record UpdateBirthdayPlanDto(string Theme, string Location, string Notes, DateTime? Date);
+public record UpdateBirthdayPlanDto(string Theme, string Location, string Notes, string FoodAndDrinks, string AiSummary, DateTime? Date);
 public record UpdateGuestDto(string Status, int AdditionalAdults, int AdditionalChildren, string? SubGuests);
 public record AddBirthdayGuestDto(string Name);
 

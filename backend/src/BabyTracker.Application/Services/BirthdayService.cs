@@ -34,6 +34,8 @@ public class BirthdayService
         plan.Theme = dto.Theme;
         plan.Location = dto.Location;
         plan.Notes = dto.Notes;
+        plan.FoodAndDrinks = dto.FoodAndDrinks;
+        plan.AiSummary = dto.AiSummary;
         plan.Date = dto.Date;
 
         await _birthdays.UpdateAsync(plan);
@@ -73,6 +75,6 @@ public class BirthdayService
     public async Task DeleteGuestAsync(Guid guestId) => await _birthdays.RemoveGuestAsync(guestId);
 
     private BirthdayPlanDto MapToDto(BirthdayPlan p) =>
-        new BirthdayPlanDto(p.Id, p.ChildId, p.Theme, p.Location, p.Notes, p.Date,
+        new BirthdayPlanDto(p.Id, p.ChildId, p.Theme, p.Location, p.Notes, p.FoodAndDrinks, p.AiSummary, p.Date,
             p.Guests.Select(g => new BirthdayGuestDto(g.Id, g.Name, g.Status, g.AdditionalAdults, g.AdditionalChildren, g.SubGuestsJson)));
 }
