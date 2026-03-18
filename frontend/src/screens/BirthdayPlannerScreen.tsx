@@ -23,7 +23,11 @@ export default function BirthdayPlannerScreen({ route }: any) {
   const [dateText, setDateText] = useState('');
 
   const fetchPlan = async () => {
-    if (!childId) return;
+    if (!childId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const { data } = await getBirthdayPlan(childId);
       setPlan(data);
@@ -106,13 +110,6 @@ export default function BirthdayPlannerScreen({ route }: any) {
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#FF6B6B" />
-      </View>
-    );
-  }
 
   const stats = useMemo(() => {
     if (!plan) return { confirmed: 0, maybe: 0, chairs: 0, food: 0, adults: 0, children: 0 };

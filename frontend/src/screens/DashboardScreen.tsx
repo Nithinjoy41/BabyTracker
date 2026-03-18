@@ -115,7 +115,7 @@ export default function DashboardScreen({ navigation }: any) {
         </View>
 
         <View style={styles.greetingContainer}>
-          <Text style={styles.greeting}>Hi {fullName.split(' ')[0]} 👋</Text>
+          <Text style={styles.greeting}>Hi {fullName?.split(' ')[0] || 'Parent'} 👋</Text>
           <Text style={styles.subGreeting}>{selectedChild?.name} is doing great today!</Text>
         </View>
       </View>
@@ -136,6 +136,14 @@ export default function DashboardScreen({ navigation }: any) {
               <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>{type}</Text>
             </TouchableOpacity>
           ))}
+          <TouchableOpacity 
+            style={[styles.actionCard, { backgroundColor: theme.colors.card }]}
+            onPress={() => navigation.navigate('BirthdayPlanner', { childId: selectedChildId })}>
+            <View style={[styles.emojiCircle, { backgroundColor: '#FF6B6B22' }]}>
+              <Text style={styles.actionEmoji}>🎂</Text>
+            </View>
+            <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>Birthday</Text>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.actionCard, { backgroundColor: theme.colors.card }]}
             onPress={() => setShowInviteModal(true)}>
