@@ -1,4 +1,7 @@
 {
+  "cli": {
+    "appDir": "./"
+  },
   "build": {
     "development": {
       "developmentClient": true,
