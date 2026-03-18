@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
-  Alert, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform
+  Alert, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Share
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -18,6 +18,7 @@ export default function BirthdayPlannerScreen({ route }: any) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newGuest, setNewGuest] = useState('');
+  const [recentlySaved, setRecentlySaved] = useState<Record<string, boolean>>({});
 
   // Local state for date to prevent jumping while typing
   const [dateText, setDateText] = useState('');
@@ -63,6 +64,13 @@ export default function BirthdayPlannerScreen({ route }: any) {
     try {
       const { data } = await updateBirthdayPlan(childId, apiPayload);
       setPlan(data);
+      
+      // Success Feedback
+      const field = Object.keys(updates)[0];
+      if (field) {
+        setRecentlySaved(prev => ({ ...prev, [field]: true }));
+        setTimeout(() => setRecentlySaved(prev => ({ ...prev, [field]: false })), 2000);
+      }
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'Could not update plan.');
@@ -80,22 +88,41 @@ export default function BirthdayPlannerScreen({ route }: any) {
     handleUpdatePlan({ aiSummary: summary });
   };
 
+  const handleShareSummary = async () => {
+    if (!plan?.aiSummary) {
+      Alert.alert('Empty Summary', 'Generate a summary first before sharing!');
+      return;
+    }
+    try {
+      await Share.share({
+        message: plan.aiSummary,
+        title: `${child?.name}'s Birthday Invitation`
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
   const handleAddGuest = async () => {
     if (!newGuest.trim() || !childId) return;
+    
+    // Validation: prevent duplicate names (case insensitive)
+    const isDuplicate = plan?.guests.some(g => g.name.toLowerCase() === newGuest.trim().toLowerCase());
+    if (isDuplicate) {
+      Alert.alert('Duplicate Guest', `${newGuest.trim()} is already on the list!`);
+      return;
+    }
+
     setSaving(true);
     try {
       const { data } = await addBirthdayGuest(childId, newGuest.trim());
       setNewGuest('');
-      // Update local state with the new guest returned from API
       if (plan) {
-        setPlan({
-          ...plan,
-          guests: [...plan.guests, data]
-        });
+        setPlan({ ...plan, guests: [...plan.guests, data] });
       }
     } catch (e) {
       Alert.alert('Error', 'Could not add guest.');
-      fetchPlan(); // Rollback/Sync on error
+      fetchPlan();
     } finally {
       setSaving(false);
     }
@@ -285,6 +312,9 @@ export default function BirthdayPlannerScreen({ route }: any) {
               <Text style={styles.mainStatLabel}>Plates</Text>
             </View>
           </View>
+          <View style={styles.tipContainer}>
+            <Text style={styles.tipText}>💡 Tip: Order the cake 2 weeks in advance!</Text>
+          </View>
         </View>
 
         <View style={styles.contentWrapper}>
@@ -301,7 +331,10 @@ export default function BirthdayPlannerScreen({ route }: any) {
             </View>
             
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>PARTY THEME</Text>
+              <View style={styles.labelRow}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>PARTY THEME</Text>
+                {recentlySaved.theme && <Text style={styles.syncedText}>Synced</Text>}
+              </View>
               <TextInput
                 style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
                 value={plan?.theme}
@@ -312,7 +345,10 @@ export default function BirthdayPlannerScreen({ route }: any) {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>LOCATION</Text>
+              <View style={styles.labelRow}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>LOCATION</Text>
+                {recentlySaved.location && <Text style={styles.syncedText}>Synced</Text>}
+              </View>
               <TextInput
                 style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
                 value={plan?.location}
@@ -324,17 +360,31 @@ export default function BirthdayPlannerScreen({ route }: any) {
 
             <View style={styles.inputRow}>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>DATE</Text>
+                <View style={styles.labelRow}>
+                  <Text style={[styles.label, { color: theme.colors.textSecondary }]}>DATE</Text>
+                  {recentlySaved.date && <Text style={styles.syncedText}>Synced</Text>}
+                </View>
                 <TextInput
                   style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
                   value={dateText}
-                  onChangeText={setDateText}
+                  onChangeText={(text) => {
+                    // Simple mask: YYYY-MM-DD
+                    const cleaned = text.replace(/[^0-9]/g, '');
+                    let masked = cleaned;
+                    if (cleaned.length > 4) masked = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
+                    if (cleaned.length > 6) masked = masked.slice(0, 7) + '-' + masked.slice(7, 9);
+                    setDateText(masked.slice(0, 10));
+                  }}
                   placeholder="YYYY-MM-DD"
+                  keyboardType="numeric"
                 />
               </View>
             </View>
 
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>NOTES</Text>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>NOTES</Text>
+              {recentlySaved.notes && <Text style={styles.syncedText}>Synced</Text>}
+            </View>
             <TextInput
               style={[styles.input, styles.textArea, { color: theme.colors.text, borderColor: theme.colors.border }]}
               multiline
@@ -347,7 +397,10 @@ export default function BirthdayPlannerScreen({ route }: any) {
 
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <Text style={[styles.cardTitle, { color: theme.colors.text, marginBottom: 20 }]}>Menu & Catering 🍕</Text>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>FOOD & DRINKS</Text>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>FOOD & DRINKS</Text>
+              {recentlySaved.foodAndDrinks && <Text style={styles.syncedText}>Synced</Text>}
+            </View>
             <TextInput
               style={[styles.input, styles.textArea, { color: theme.colors.text, borderColor: theme.colors.border }]}
               multiline
@@ -361,9 +414,18 @@ export default function BirthdayPlannerScreen({ route }: any) {
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={styles.cardHeader}>
               <Text style={[styles.cardTitle, { color: theme.colors.text }]}>AI Summary ✨</Text>
-              <TouchableOpacity style={[styles.aiBtn, { backgroundColor: theme.colors.primary }]} onPress={handleGenerateSummary}>
-                <Text style={styles.aiBtnText}>Suggest</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.aiBtn, { backgroundColor: theme.colors.primary }]} onPress={handleGenerateSummary}>
+                  <Text style={styles.aiBtnText}>Suggest</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.aiBtn, { backgroundColor: '#4CAF50' }]} onPress={handleShareSummary}>
+                  <Text style={styles.aiBtnText}>Share</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>AI GENERATED SUMMARY</Text>
+              {recentlySaved.aiSummary && <Text style={styles.syncedText}>Synced</Text>}
             </View>
             <TextInput
               style={[styles.input, styles.textArea, { color: theme.colors.text, borderColor: theme.colors.border, fontStyle: 'italic' }]}
@@ -391,16 +453,23 @@ export default function BirthdayPlannerScreen({ route }: any) {
               </TouchableOpacity>
             </View>
 
-            {['Confirmed', 'Maybe', 'Pending'].map(status => {
-              const list = plan?.guests.filter(g => g.status === status) || [];
-              if (list.length === 0) return null;
-              return (
-                <View key={status} style={styles.listSection}>
-                  <Text style={[styles.listHeader, { color: theme.colors.primary }]}>{status.toUpperCase()} – {list.length}</Text>
-                  {list.map(renderGuestItem)}
-                </View>
-              );
-            })}
+            {plan?.guests.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>🥚</Text>
+                <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>The list is empty. Time to invite some friends!</Text>
+              </View>
+            ) : (
+              ['Confirmed', 'Maybe', 'Pending'].map(status => {
+                const list = plan?.guests.filter(g => g.status === status) || [];
+                if (list.length === 0) return null;
+                return (
+                  <View key={status} style={styles.listSection}>
+                    <Text style={[styles.listHeader, { color: theme.colors.primary }]}>{status.toUpperCase()} – {list.length}</Text>
+                    {list.map(renderGuestItem)}
+                  </View>
+                );
+              })
+            )}
           </View>
         </View>
       </ScrollView>
@@ -430,11 +499,15 @@ const styles = StyleSheet.create({
   mainStatValue: { color: '#FFF', fontSize: 32, fontWeight: '900' },
   mainStatLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '700', marginTop: 4 },
   statDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.2)' },
+  tipContainer: { marginTop: 24, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)' },
+  tipText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
   contentWrapper: { padding: 20 },
   card: { padding: 24, borderRadius: 32, marginBottom: 20, elevation: 2 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   cardTitle: { fontSize: 20, fontWeight: '900' },
-  label: { fontSize: 11, fontWeight: '800', marginBottom: 8, letterSpacing: 1 },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  label: { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+  syncedText: { fontSize: 10, fontWeight: '900', color: '#4CAF50', textTransform: 'uppercase' },
   inputGroup: { marginBottom: 20 },
   input: { borderWidth: 1.5, borderRadius: 20, padding: 16, fontSize: 16 },
   textArea: { height: 100, textAlignVertical: 'top' },
@@ -467,6 +540,9 @@ const styles = StyleSheet.create({
   statusOption: { flex: 1, paddingVertical: 10, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
   statusOptionText: { fontSize: 11, fontWeight: '800', color: '#888' },
   confirmedText: { color: '#4CAF50' },
+  emptyState: { padding: 40, alignItems: 'center' },
+  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+  emptyText: { textAlign: 'center', fontSize: 14, fontWeight: '600', lineHeight: 20 },
   statItem: { flex: 1, minWidth: '45%', borderRadius: 18, padding: 16, alignItems: 'center', elevation: 2 },
   statValue: { fontSize: 28, fontWeight: '900' },
   statLabel: { fontSize: 11, fontWeight: '700', color: '#888', marginTop: 4 },
