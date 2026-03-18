@@ -12,4 +12,6 @@ public class BirthdayGuest
     
     public string Name { get; set; } = string.Empty;
     public string Status { get; set; } = "Pending"; // Pending, Confirmed, Maybe, Declined
+    public int AdditionalAdults { get; set; }
+    public int AdditionalChildren { get; set; }
 }
