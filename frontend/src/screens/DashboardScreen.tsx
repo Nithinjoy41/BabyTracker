@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl,
-  Modal, TextInput, Alert, KeyboardAvoidingView, Platform
+  Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { getLogs } from '../api/logs';
 import { generateInvite } from '../api/family';
 import { LogEntry } from '../types';
@@ -13,12 +14,26 @@ const typeEmoji: Record<string, string> = { Food: '🍼', Nappy: '🧷', Sleep: 
 
 export default function DashboardScreen({ navigation }: any) {
   const { fullName, selectedChildId, children, signOut } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
+  
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+
+  // Easter Egg logic
+  const [logoClicks, setLogoClicks] = useState(0);
+  const handleLogoClick = () => {
+    const newCount = logoClicks + 1;
+    if (newCount >= 5) {
+      setLogoClicks(0);
+      navigation.navigate('BabyPacman', { babyName: selectedChild?.name || 'Leo' });
+    } else {
+      setLogoClicks(newCount);
+    }
+  };
 
   const selectedChild = children.find(c => c.id === selectedChildId);
 
@@ -48,86 +63,121 @@ export default function DashboardScreen({ navigation }: any) {
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.greeting}>{selectedChild?.name}'s Dashboard 👶</Text>
-          <Text style={styles.sub}>Logged in as {fullName}</Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => setShowInviteModal(true)} style={styles.inviteBtn}>
-            <Text style={styles.inviteText}>Invite</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('ChildPicker')} style={styles.switchBtn}>
-            <Text style={styles.switchText}>Switch</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Quick-action buttons */}
-      <View style={styles.actions}>
-        {['Food', 'Nappy', 'Sleep'].map((type) => (
-          <TouchableOpacity key={type} style={styles.actionBtn}
-            onPress={() => navigation.navigate('AddLog', { type })}>
-            <Text style={styles.actionEmoji}>{typeEmoji[type]}</Text>
-            <Text style={styles.actionLabel}>{type}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Birthday Banner */}
-      {(() => {
-        if (!selectedChild?.dateOfBirth) return null;
-        const dob = new Date(selectedChild.dateOfBirth);
-        const today = new Date();
-        const nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
-        if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
-        
-        const diffTime = nextBirthday.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays <= 30) {
-          return (
-            <TouchableOpacity 
-              style={styles.birthdayBanner}
-              onPress={() => navigation.navigate('BirthdayPlanner', { childId: selectedChildId })}
-            >
-              <Text style={styles.birthdayEmoji}>🎂</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.birthdayTitle}>
-                  {diffDays === 0 ? "It's Party Day! 🎈" : `${selectedChild.name}'s birthday is in ${diffDays} day${diffDays > 1 ? 's' : ''}!`}
-                </Text>
-                <Text style={styles.birthdaySub}>Tap to plan the perfect celebration ✨</Text>
-              </View>
-              <Text style={styles.birthdayArrow}>→</Text>
-            </TouchableOpacity>
-          );
-        }
-        return null;
-      })()}
-
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
-
-      <FlatList
-        data={logs}
-        keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6C63FF']} />}
-        renderItem={({ item }) => (
-          <View style={styles.logCard}>
-            <Text style={styles.logEmoji}>{typeEmoji[item.type] || '📝'}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.logType}>{item.type}{item.durationMinutes ? ` – ${item.durationMinutes} min` : ''}</Text>
-              {item.notes ? <Text style={styles.logNotes}>{item.notes}</Text> : null}
-              <Text style={styles.logMeta}>{item.createdBy} · {new Date(item.timestamp).toLocaleString()}</Text>
-            </View>
+  const birthdayBanner = useMemo(() => {
+    if (!selectedChild?.dateOfBirth) return null;
+    const dob = new Date(selectedChild.dateOfBirth);
+    const today = new Date();
+    const nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+    if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+    
+    const diffTime = nextBirthday.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 30) {
+      return (
+        <TouchableOpacity 
+          style={[styles.birthdayBanner, { backgroundColor: '#FF6B6B' }]}
+          onPress={() => navigation.navigate('BirthdayPlanner', { childId: selectedChildId })}
+        >
+          <Text style={styles.birthdayEmoji}>🎂</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.birthdayTitle}>
+              {diffDays === 0 ? "It's Party Day! 🎈" : `${selectedChild.name}'s birthday is in ${diffDays} day${diffDays > 1 ? 's' : ''}!`}
+            </Text>
+            <Text style={styles.birthdaySub}>Tap to plan the perfect celebration ✨</Text>
           </View>
+          <Text style={styles.birthdayArrow}>→</Text>
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  }, [selectedChild, selectedChildId]);
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* ── IMMERSIVE HEADER ── */}
+      <View style={[styles.header, { backgroundColor: theme.colors.primary, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }]}>
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity onPress={handleLogoClick}>
+             <Text style={styles.logoText}>BabyTracker 👶</Text>
+          </TouchableOpacity>
+          <View style={styles.headerRight}>
+            <TouchableOpacity onPress={toggleTheme} style={styles.iconBtn}>
+               <Text style={styles.iconEmoji}>{isDark ? '☀️' : '🌙'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('ChildPicker')} style={styles.iconBtn}>
+               <Text style={styles.iconEmoji}>🔄</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={signOut} style={styles.iconBtn}>
+               <Text style={styles.iconEmoji}>🚪</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.greetingContainer}>
+          <Text style={styles.greeting}>Hi {fullName.split(' ')[0]} 👋</Text>
+          <Text style={styles.subGreeting}>{selectedChild?.name} is doing great today!</Text>
+        </View>
+      </View>
+
+      <ScrollView 
+        style={{ flex: 1, padding: 20 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />}
+      >
+        {/* Quick Actions */}
+        <View style={styles.actionsGrid}>
+          {['Food', 'Nappy', 'Sleep'].map((type) => (
+            <TouchableOpacity key={type} 
+              style={[styles.actionCard, { backgroundColor: theme.colors.card }]}
+              onPress={() => navigation.navigate('AddLog', { type })}>
+              <View style={[styles.emojiCircle, { backgroundColor: theme.colors.primary + '11' }]}>
+                <Text style={styles.actionEmoji}>{typeEmoji[type]}</Text>
+              </View>
+              <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>{type}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity 
+            style={[styles.actionCard, { backgroundColor: theme.colors.card }]}
+            onPress={() => setShowInviteModal(true)}>
+            <View style={[styles.emojiCircle, { backgroundColor: theme.colors.secondary + '11' }]}>
+              <Text style={styles.actionEmoji}>👥</Text>
+            </View>
+            <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>Invite</Text>
+          </TouchableOpacity>
+        </View>
+
+        {birthdayBanner}
+
+        <View style={styles.recentHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Recent Activity</Text>
+          <TouchableOpacity onPress={onRefresh}>
+             <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Refresh</Text>
+          </TouchableOpacity>
+        </View>
+
+        {logs.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No logs yet. Start by tracking an activity above!</Text>
+          </View>
+        ) : (
+          logs.map((item) => (
+            <View key={item.id} style={[styles.logCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+               <View style={[styles.logEmojiCircle, { backgroundColor: theme.colors.primary + '08' }]}>
+                 <Text style={styles.logEmoji}>{typeEmoji[item.type] || '📝'}</Text>
+               </View>
+               <View style={{ flex: 1 }}>
+                 <View style={styles.logRow}>
+                    <Text style={[styles.logType, { color: theme.colors.text }]}>{item.type}</Text>
+                    <Text style={styles.logTime}>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                 </View>
+                 {item.notes ? <Text style={[styles.logNotes, { color: theme.colors.textSecondary }]}>{item.notes}</Text> : null}
+                 <Text style={styles.logMeta}>{item.createdBy} · {item.durationMinutes ? `${item.durationMinutes} min` : 'Just now'}</Text>
+               </View>
+            </View>
+          ))
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No logs yet. Tap a button above to start!</Text>}
-      />
+        <View style={{ height: 40 }} />
+      </ScrollView>
 
       {/* Invite Modal */}
       <Modal visible={showInviteModal} transparent animationType="fade">
@@ -172,64 +222,59 @@ export default function DashboardScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5FF', padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 8 },
-  greeting: { fontSize: 20, fontWeight: '700', color: '#333' },
-  sub: { fontSize: 12, color: '#888', marginTop: 2 },
-  headerActions: { flexDirection: 'row', gap: 6 },
-  inviteBtn: { backgroundColor: '#4ECDC4', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 },
-  inviteText: { color: '#fff', fontWeight: '600', fontSize: 12 },
-  switchBtn: { backgroundColor: '#6C63FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 },
-  switchText: { color: '#fff', fontWeight: '600', fontSize: 12 },
-  logoutBtn: { backgroundColor: '#FF6B6B', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 },
-  logoutText: { color: '#fff', fontWeight: '600', fontSize: 12 },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  actionBtn: { flex: 1, backgroundColor: '#fff', marginHorizontal: 4, borderRadius: 14, padding: 16, alignItems: 'center', elevation: 2, shadowColor: '#6C63FF', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6 },
-  actionEmoji: { fontSize: 32 },
-  actionLabel: { marginTop: 6, fontSize: 14, fontWeight: '600', color: '#555' },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 10 },
-  logCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8, elevation: 1, alignItems: 'center' },
-  logEmoji: { fontSize: 28, marginRight: 12 },
-  logType: { fontSize: 16, fontWeight: '600', color: '#333' },
-  logNotes: { fontSize: 13, color: '#888', marginTop: 2 },
-  logMeta: { fontSize: 11, color: '#aaa', marginTop: 4 },
-  empty: { textAlign: 'center', color: '#aaa', marginTop: 40, fontSize: 15 },
+  container: { flex: 1 },
+  header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40, elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 15 },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  logoText: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+  headerRight: { flexDirection: 'row', gap: 12 },
+  iconBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 10, borderRadius: 15 },
+  iconEmoji: { fontSize: 18 },
+  greetingContainer: { marginTop: 30 },
+  greeting: { fontSize: 32, fontWeight: '900', color: '#fff' },
+  subGreeting: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginTop: 4, fontWeight: '600' },
   
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 30 },
+  actionCard: { flex: 1, minWidth: '45%', borderRadius: 24, padding: 20, alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10 },
+  emojiCircle: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  actionEmoji: { fontSize: 28 },
+  actionLabel: { fontSize: 14, fontWeight: '800' },
+  
+  birthdayBanner: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', marginBottom: 30, elevation: 8, shadowColor: '#FF6B6B', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 },
+  birthdayEmoji: { fontSize: 40, marginRight: 16 },
+  birthdayTitle: { color: '#fff', fontSize: 17, fontWeight: '900' },
+  birthdaySub: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 4 },
+  birthdayArrow: { color: '#fff', fontSize: 24, fontWeight: '900' },
+  
+  recentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { fontSize: 22, fontWeight: '900' },
+  
+  logCard: { flexDirection: 'row', borderRadius: 24, padding: 16, marginBottom: 12, borderWidth: 1, alignItems: 'center' },
+  logEmojiCircle: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  logEmoji: { fontSize: 22 },
+  logRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  logType: { fontSize: 17, fontWeight: '800' },
+  logTime: { fontSize: 12, color: '#aaa', fontWeight: '600' },
+  logNotes: { fontSize: 14, marginTop: 4, fontStyle: 'italic' },
+  logMeta: { fontSize: 11, color: '#bbb', marginTop: 6, fontWeight: '600' },
+  
+  emptyContainer: { padding: 40, alignItems: 'center' },
+  emptyText: { textAlign: 'center', color: '#aaa', fontSize: 16, fontStyle: 'italic' },
+
   // Modal styles
-  modalOverlay: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 20 },
-  modalContent: { backgroundColor: '#fff', borderRadius: 24, padding: 24 },
-  modalTitle: { fontSize: 22, fontWeight: '700', color: '#333', marginBottom: 12, textAlign: 'center' },
-  modalSubtitle: { fontSize: 14, color: '#666', marginBottom: 20, textAlign: 'center' },
-  input: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, padding: 14,
-    fontSize: 16, marginBottom: 16, color: '#333',
-  },
-  modalBtn: { backgroundColor: '#6C63FF', borderRadius: 12, padding: 14, alignItems: 'center' },
-  modalBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  cancelText: { color: '#888', textAlign: 'center', marginTop: 16, fontSize: 15 },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 36, borderTopRightRadius: 36, padding: 30, paddingBottom: 50 },
+  modalTitle: { fontSize: 26, fontWeight: '900', color: '#333', marginBottom: 10, textAlign: 'center' },
+  modalSubtitle: { fontSize: 15, color: '#777', marginBottom: 24, textAlign: 'center', lineHeight: 22 },
+  input: { backgroundColor: '#F5F5F7', borderRadius: 18, padding: 18, fontSize: 16, marginBottom: 20, color: '#333' },
+  modalBtn: { backgroundColor: '#6C63FF', borderRadius: 18, padding: 18, alignItems: 'center', elevation: 4 },
+  modalBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  cancelText: { color: '#aaa', textAlign: 'center', marginTop: 20, fontSize: 16, fontWeight: '600' },
   
   // Success state
   codeContainer: { alignItems: 'center', paddingVertical: 10 },
-  codeTitle: { fontSize: 16, color: '#555', marginBottom: 10 },
-  codeText: { fontSize: 48, fontWeight: '800', color: '#6C63FF', letterSpacing: 4, marginVertical: 10 },
-  codeInfo: { fontSize: 13, color: '#aaa', marginBottom: 24 },
-  doneBtn: { backgroundColor: '#4ECDC4', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 40 },
-  doneBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  birthdayBanner: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 18,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    elevation: 4,
-    shadowColor: '#FF6B6B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  birthdayEmoji: { fontSize: 32, marginRight: 16 },
-  birthdayTitle: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  birthdaySub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
-  birthdayArrow: { color: '#fff', fontSize: 20, fontWeight: '700', marginLeft: 8 },
+  codeTitle: { fontSize: 16, color: '#555', marginBottom: 10, fontWeight: '600' },
+  codeText: { fontSize: 52, fontWeight: '900', color: '#6C63FF', letterSpacing: 8, marginVertical: 15 },
+  codeInfo: { fontSize: 13, color: '#aaa', marginBottom: 30 },
+  doneBtn: { backgroundColor: '#4ECDC4', borderRadius: 18, paddingVertical: 16, paddingHorizontal: 60, elevation: 4 },
+  doneBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
 });
