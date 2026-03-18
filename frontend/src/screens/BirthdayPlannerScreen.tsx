@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getBirthdayPlan, updateBirthdayPlan, addBirthdayGuest, updateGuest, deleteGuest } from '../api/birthdays';
 import { BirthdayPlan, BirthdayGuest } from '../types';
+import CustomCalendar from '../components/CustomCalendar';
 
 export default function BirthdayPlannerScreen({ route }: any) {
   const { childId } = route.params || {};
@@ -19,6 +20,7 @@ export default function BirthdayPlannerScreen({ route }: any) {
   const [saving, setSaving] = useState(false);
   const [newGuest, setNewGuest] = useState('');
   const [recentlySaved, setRecentlySaved] = useState<Record<string, boolean>>({});
+  const [calendarVisible, setCalendarVisible] = useState(false);
 
   // Local state for date to prevent jumping while typing
   const [dateText, setDateText] = useState('');
@@ -364,21 +366,26 @@ export default function BirthdayPlannerScreen({ route }: any) {
                   <Text style={[styles.label, { color: theme.colors.textSecondary }]}>DATE</Text>
                   {recentlySaved.date && <Text style={styles.syncedText}>Synced</Text>}
                 </View>
-                <TextInput
-                  style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-                  value={dateText}
-                  onChangeText={(text) => {
-                    // Simple mask: YYYY-MM-DD
-                    const cleaned = text.replace(/[^0-9]/g, '');
-                    let masked = cleaned;
-                    if (cleaned.length > 4) masked = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
-                    if (cleaned.length > 6) masked = masked.slice(0, 7) + '-' + masked.slice(7, 9);
-                    setDateText(masked.slice(0, 10));
-                  }}
-                  placeholder="YYYY-MM-DD"
-                  keyboardType="numeric"
-                />
+                <TouchableOpacity 
+                  style={[styles.input, { borderColor: theme.colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
+                  onPress={() => setCalendarVisible(true)}
+                >
+                  <Text style={{ color: dateText ? theme.colors.text : '#aaa', fontSize: 16 }}>
+                    {dateText || 'YYYY-MM-DD'}
+                  </Text>
+                  <Text style={{ fontSize: 18 }}>📅</Text>
+                </TouchableOpacity>
               </View>
+
+              <CustomCalendar 
+                visible={calendarVisible}
+                initialDate={dateText}
+                onClose={() => setCalendarVisible(false)}
+                onSelectDate={(date) => {
+                  setDateText(date);
+                  handleUpdatePlan({ date: date });
+                }}
+              />
             </View>
 
             <View style={styles.labelRow}>
