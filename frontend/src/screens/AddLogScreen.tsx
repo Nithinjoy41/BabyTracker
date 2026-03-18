@@ -59,7 +59,7 @@ export default function AddLogScreen({ route, navigation }: any) {
               <Text style={[styles.typeText, { color: type === t ? theme.colors.primary : theme.colors.textSecondary }]}>{t}</Text>
             </TouchableOpacity>
           ))}
-        </div>
+        </View>
 
         {type === 'Sleep' && (
           <View style={styles.inputGroup}>
