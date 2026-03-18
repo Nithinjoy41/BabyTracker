@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, FlatList, Modal,
-  KeyboardAvoidingView, Platform
+  KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { addChild } from '../api/children';
 import { joinFamily } from '../api/auth';
 import { Child } from '../types';
 
 export default function ChildPickerScreen({ navigation }: any) {
   const { children, selectChild, setChildren, joinFamilySuccess, refreshChildren, signOut } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
+  
   const [showAddChild, setShowAddChild] = useState(false);
   const [showJoinFamily, setShowJoinFamily] = useState(false);
   const [childName, setChildName] = useState('');
@@ -31,7 +34,6 @@ export default function ChildPickerScreen({ navigation }: any) {
       setShowAddChild(false);
       setChildName('');
       setChildDob('');
-      // Auto-select if it's the only child
       if (updated.length === 1) {
         selectChild(updated[0].id);
       }
@@ -49,41 +51,18 @@ export default function ChildPickerScreen({ navigation }: any) {
     try {
       setLoading(true);
       setErrorMsg(null);
-      console.log('[JOIN] Starting join for code:', inviteCode.trim());
-      
       const { data } = await joinFamily(inviteCode.trim());
-      console.log('[JOIN] Success, payload:', data);
-      
       await joinFamilySuccess(data);
-      console.log('[JOIN] Session updated');
-      
       setShowJoinFamily(false);
       setInviteCode('');
     } catch (e: any) {
-      console.error('[JOIN] Failed:', e);
       let msg = e.response?.data?.error || e.message || 'Check connection';
-      
-      // Handle FluentValidation structure
       if (e.response?.data?.errors) {
         const firstErr = Object.values(e.response.data.errors)[0];
         if (Array.isArray(firstErr)) msg = firstErr[0];
       }
-      
       setErrorMsg(msg);
-      if (Platform.OS !== 'web') {
-        Alert.alert('Error', `Could not join: ${msg}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefreshChildren = async () => {
-    setLoading(true); // Added setLoading(true) here
-    try {
-      await refreshChildren();
-    } catch (e) {
-      Alert.alert('Error', 'Could not refresh children.');
+      if (Platform.OS !== 'web') Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -102,124 +81,117 @@ export default function ChildPickerScreen({ navigation }: any) {
 
   const handleSelectChild = async (id: string) => {
     try {
-      console.log('[PICKER] Selecting child:', id);
       await selectChild(id);
-      console.log('[PICKER] Child selected, waiting for nav switch...');
-      
-      // On mobile web/browsers, state propagation can sometimes be racey with navigation.
-      // We only call goBack if we are in the "Switch Child" mode (not initial).
       setTimeout(() => {
-        if (navigation?.canGoBack()) {
-          console.log('[PICKER] Can go back, popping screen');
-          navigation.goBack();
-        } else {
-          console.log('[PICKER] Initial picker, expecting stack replace');
-        }
+        if (navigation?.canGoBack()) navigation.goBack();
       }, 100);
     } catch (e) {
-      console.error('[PICKER] Select failed:', e);
       Alert.alert('Error', 'Could not select child.');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>👶 Your Children</Text>
-        <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
-      {children.length > 0 ? (
-        <FlatList
-          data={children}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.childCard} onPress={() => handleSelectChild(item.id)}>
-              <Text style={styles.childEmoji}>👶</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.childName}>{item.name}</Text>
-                <Text style={styles.childAge}>{getAge(item.dateOfBirth)}</Text>
-              </View>
-              <Text style={styles.arrow}>→</Text>
-            </TouchableOpacity>
-          )}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>🍼</Text>
-          <Text style={styles.emptyTitle}>No children yet</Text>
-          <Text style={styles.emptySubtitle}>Add your child or join a family with an invite code</Text>
-          <TouchableOpacity onPress={handleRefreshChildren} style={styles.refreshBtn}>
-            <Text style={styles.refreshText}>🔄 Tap to Refresh</Text>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Immersive Header */}
+      <View style={[styles.headerArea, { backgroundColor: theme.colors.primary }]}>
+        <View style={styles.headerTop}>
+          <Text style={styles.logoText}>BabyTracker 👶</Text>
+          <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
+            <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
-      )}
+        <Text style={styles.headerTitle}>Welcome Back</Text>
+        <Text style={styles.headerSub}>Select a profile to continue tracking</Text>
+      </View>
 
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.addBtn} onPress={() => setShowAddChild(true)}>
-          <Text style={styles.addBtnText}>+ Add Child</Text>
+      <View style={styles.content}>
+        {children.length > 0 ? (
+          <FlatList
+            data={children}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <TouchableOpacity 
+                style={[styles.childCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]} 
+                onPress={() => handleSelectChild(item.id)}
+              >
+                <View style={[styles.emojiCircle, { backgroundColor: theme.colors.primary + '11' }]}>
+                  <Text style={styles.childEmoji}>👶</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.childName, { color: theme.colors.text }]}>{item.name}</Text>
+                  <Text style={[styles.childAge, { color: theme.colors.textSecondary }]}>{getAge(item.dateOfBirth)}</Text>
+                </View>
+                <Text style={[styles.arrow, { color: theme.colors.primary }]}>→</Text>
+              </TouchableOpacity>
+            )}
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyEmoji}>🍼</Text>
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No children yet</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>Add your child or join a family with an invite code</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.footerActions}>
+        <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.colors.primary }]} onPress={() => setShowAddChild(true)}>
+          <Text style={styles.addBtnText}>+ Add Child Profile</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.joinBtn} onPress={() => setShowJoinFamily(true)}>
-          <Text style={styles.joinBtnText}>🔗 Join Family</Text>
+        <TouchableOpacity style={[styles.joinBtn, { borderColor: theme.colors.primary }]} onPress={() => setShowJoinFamily(true)}>
+          <Text style={[styles.joinBtnText, { color: theme.colors.primary }]}>🔗 Join Existing Family</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Add Child Modal */}
+      {/* Modals ... */}
       <Modal visible={showAddChild} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add a Child</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add New Child</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Child's name"
-              placeholderTextColor="#aaa"
+              style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Full Name"
+              placeholderTextColor="#999"
               value={childName}
               onChangeText={setChildName}
             />
             <TextInput
-              style={styles.input}
-              placeholder="Date of birth (YYYY-MM-DD)"
-              placeholderTextColor="#aaa"
+              style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Birthday (YYYY-MM-DD)"
+              placeholderTextColor="#999"
               value={childDob}
               onChangeText={setChildDob}
             />
-            <TouchableOpacity style={styles.modalBtn} onPress={handleAddChild} disabled={loading}>
-              <Text style={styles.modalBtnText}>{loading ? 'Adding...' : 'Add Child'}</Text>
+            <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: theme.colors.primary }]} onPress={handleAddChild} disabled={loading}>
+              <Text style={styles.modalActionBtnText}>{loading ? 'Adding...' : 'Create Profile'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowAddChild(false)}>
-              <Text style={styles.cancelText}>Cancel</Text>
+            <TouchableOpacity onPress={() => setShowAddChild(false)} style={styles.modalCancel}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Join Family Modal */}
       <Modal visible={showJoinFamily} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Join a Family</Text>
-            <Text style={styles.modalSubtitle}>Enter the invite code shared by a family member</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Join Family</Text>
+            <Text style={[styles.modalSubtitle, { color: theme.colors.textSecondary }]}>Enter the 8-character invite code</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Invite code (e.g. A1B2C3D4)"
-              placeholderTextColor="#aaa"
+              style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.border, textAlign: 'center', letterSpacing: 4, fontWeight: '800' }]}
+              placeholder="INVITECODE"
+              placeholderTextColor="#999"
               value={inviteCode}
               onChangeText={setInviteCode}
               autoCapitalize="characters"
             />
-            {errorMsg && (
-              <Text style={{ color: '#FF4D4D', marginBottom: 10, textAlign: 'center' }}>
-                ❌ {errorMsg}
-              </Text>
-            )}
-            <TouchableOpacity style={styles.modalBtn} onPress={handleJoinFamily} disabled={loading}>
-              <Text style={styles.modalBtnText}>{loading ? 'Joining...' : 'Join Family'}</Text>
+            {errorMsg && <Text style={styles.errorText}>❌ {errorMsg}</Text>}
+            <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: theme.colors.secondary }]} onPress={handleJoinFamily} disabled={loading}>
+              <Text style={styles.modalActionBtnText}>{loading ? 'Joining...' : 'Join Family'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowJoinFamily(false)}>
-              <Text style={styles.cancelText}>Cancel</Text>
+            <TouchableOpacity onPress={() => setShowJoinFamily(false)} style={styles.modalCancel}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -229,41 +201,41 @@ export default function ChildPickerScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5FF', padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#333' },
-  logoutBtn: { backgroundColor: '#FF6B6B', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  logoutText: { color: '#fff', fontWeight: '600' },
-  list: { paddingBottom: 100 },
-  childCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 16, padding: 18, marginBottom: 12,
-    elevation: 3, shadowColor: '#6C63FF', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8,
+  container: { flex: 1 },
+  headerArea: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, elevation: 12 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  logoText: { color: '#fff', fontSize: 18, fontWeight: '900' },
+  logoutBtn: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
+  logoutText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  headerTitle: { fontSize: 36, fontWeight: '900', color: '#fff' },
+  headerSub: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginTop: 4, fontWeight: '600' },
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 24 },
+  list: { paddingBottom: 150 },
+  childCard: { 
+    flexDirection: 'row', alignItems: 'center', borderRadius: 24, padding: 16, marginBottom: 16, borderLeftWidth: 8, borderLeftColor: '#6C63FF', elevation: 4 
   },
-  childEmoji: { fontSize: 36, marginRight: 14 },
-  childName: { fontSize: 20, fontWeight: '700', color: '#333' },
-  childAge: { fontSize: 14, color: '#888', marginTop: 2 },
-  arrow: { fontSize: 22, color: '#6C63FF', fontWeight: '700' },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 80 },
-  emptyEmoji: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { fontSize: 22, fontWeight: '700', color: '#333' },
-  emptySubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginTop: 6, paddingHorizontal: 40 },
-  actions: { position: 'absolute', bottom: 30, left: 16, right: 16, gap: 10 },
-  addBtn: { backgroundColor: '#6C63FF', borderRadius: 14, padding: 16, alignItems: 'center' },
-  addBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  joinBtn: { backgroundColor: '#fff', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 2, borderColor: '#6C63FF' },
-  joinBtnText: { color: '#6C63FF', fontSize: 16, fontWeight: '700' },
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
-  modalTitle: { fontSize: 22, fontWeight: '700', color: '#333', marginBottom: 8 },
-  modalSubtitle: { fontSize: 14, color: '#888', marginBottom: 16 },
-  input: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, padding: 14,
-    fontSize: 16, marginBottom: 12, color: '#333',
-  },
-  modalBtn: { backgroundColor: '#6C63FF', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 4 },
-  modalBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  cancelText: { color: '#888', textAlign: 'center', marginTop: 14, fontSize: 15 },
-  refreshBtn: { marginTop: 20, backgroundColor: '#E0E0FF', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
-  refreshText: { color: '#6C63FF', fontWeight: '700', fontSize: 15 },
+  emojiCircle: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  childEmoji: { fontSize: 28 },
+  childName: { fontSize: 20, fontWeight: '900' },
+  childAge: { fontSize: 14, marginTop: 2, fontWeight: '600' },
+  arrow: { fontSize: 24, fontWeight: '900' },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 100 },
+  emptyEmoji: { fontSize: 80, marginBottom: 20 },
+  emptyTitle: { fontSize: 24, fontWeight: '900' },
+  emptySubtitle: { fontSize: 15, textAlign: 'center', marginTop: 8, paddingHorizontal: 40, lineHeight: 22 },
+  footerActions: { position: 'absolute', bottom: 40, left: 24, right: 24, gap: 12 },
+  addBtn: { borderRadius: 20, padding: 20, alignItems: 'center', elevation: 6 },
+  addBtnText: { color: '#fff', fontSize: 17, fontWeight: '900' },
+  joinBtn: { borderRadius: 20, padding: 18, alignItems: 'center', borderWidth: 2, backgroundColor: 'transparent' },
+  joinBtnText: { fontSize: 16, fontWeight: '800' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+  modalContent: { borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, paddingBottom: 50 },
+  modalTitle: { fontSize: 24, fontWeight: '900', marginBottom: 10 },
+  modalSubtitle: { fontSize: 15, marginBottom: 20 },
+  input: { borderRadius: 18, padding: 18, fontSize: 16, marginBottom: 16, borderWidth: 1 },
+  modalActionBtn: { borderRadius: 18, padding: 18, alignItems: 'center', marginTop: 10, elevation: 4 },
+  modalActionBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  modalCancel: { marginTop: 20, alignItems: 'center' },
+  modalCancelText: { color: '#aaa', fontSize: 16, fontWeight: '700' },
+  errorText: { color: '#FF4D4D', marginBottom: 10, textAlign: 'center', fontWeight: '700' }
 });
