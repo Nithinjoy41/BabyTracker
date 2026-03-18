@@ -154,7 +154,7 @@ public class BabyTrackerDbContext : DbContext
         {
             e.HasKey(p => p.Id);
             e.HasOne(p => p.Child)
-             .WithMany() // A child might have multiple birthdays over years
+             .WithMany(c => c.BirthdayPlans) // Explicitly map to the collection in Child
              .HasForeignKey(p => p.ChildId)
              .OnDelete(DeleteBehavior.Cascade);
         });

@@ -86,7 +86,7 @@ export default function BirthdayPlannerScreen({ route }: any) {
     if (!plan) return;
     const themeStr = plan.theme || 'unthemed';
     const locStr = plan.location || 'somewhere special';
-    const summary = `Get ready for ${child?.name}'s epic ${themeStr} celebration! 🎈 We're hosting ${stats.confirmed} friends at ${locStr} for a day of magic and cake. It's going to be a blast! ✨`;
+    const summary = `Get ready for ${child?.name}'s epic ${themeStr} celebration! 🎈\n\nWe're hosting ${stats.confirmed} friends at ${locStr} for a day of magic and cake. It's going to be a blast! ✨\n\nNotes: ${plan.notes || 'None'}\nMenu: ${plan.foodAndDrinks || 'TBC'}`;
     handleUpdatePlan({ aiSummary: summary });
   };
 
@@ -189,10 +189,10 @@ export default function BirthdayPlannerScreen({ route }: any) {
     const maybeAdults = maybeList.reduce((acc, g) => acc + 1 + g.additionalAdults, 0);
     const maybeChildren = maybeList.reduce((acc, g) => acc + g.additionalChildren, 0);
 
-    // Food calculation: 1 plate per adult, 0.5 per child, plus 5 buffer
+    // Food calculation: 1 plate per adult, 0.5 per child, plus 5 buffer if any guests
     // Example: 30 adults + 10 children = 35 + 5 = 40 plates
     const baseFood = confirmedAdults + (confirmedChildren * 0.5);
-    const recommendedFood = Math.ceil(baseFood + 5);
+    const recommendedFood = baseFood > 0 ? Math.ceil(baseFood + 5) : 0;
 
     return {
       confirmed: confirmedAdults + confirmedChildren,
