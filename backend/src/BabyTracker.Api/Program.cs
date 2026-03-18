@@ -148,36 +148,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Auto-create database (supports both SQLite and PostgreSQL)
+// Auto-apply migrations (supports both SQLite and PostgreSQL)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BabyTrackerDbContext>();
-    try
-    {
-        // Try to query the new FamilyInvites table and BirthdayGuest properties.
-        // If it fails (e.g. table doesn't exist or column missing), we know the schema is old.
-        _ = db.FamilyInvites.OrderBy(i => i.Id).Take(1).ToList();
-        _ = db.BirthdayGuests.Select(g => new { g.Status, g.SubGuestsJson }).Take(1).ToList();
-        // Check for FoodAndDrinks column in BirthdayPlans
-        _ = db.BirthdayPlans.Select(bp => bp.FoodAndDrinks).Take(1).ToList();
-    }
-    catch
-    {
-        // If it throws an exception, the schema is outdated.
-        if (db.Database.IsNpgsql())
-        {
-            // Neon DB: drop the tables manually instead of dropping the entire DB
-            // because dropping the DB breaks connections and permissions on managed hosts.
-            db.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS \"BirthdayGuests\", \"BirthdayPlans\", \"FamilyInvites\", \"FamilyMembers\", \"LogEntries\", \"Photos\", \"Vaccines\", \"Children\", \"Families\", \"Users\" CASCADE;");
-        }
-        else
-        {
-            // SQLite: Safe to just delete the local file
-            db.Database.EnsureDeleted();
-        }
-    }
-    
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 app.Run();
